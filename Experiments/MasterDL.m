@@ -4,7 +4,19 @@
 
 %% 1. Simulations
 
+%1.1 Specify settings
+settings.echotimes = [1.1:1.1:13.2]';
+settings.fieldStrength = 3;
 
+settings.SNR = 60;
+settings.noiseSD = 1/settings.SNR;
+
+%1.2 Train networks with settings (echotimes, fieldstrength) for chosen
+%dataset
+nets = trainNetworks(settings);
+
+%1.3 Test on simulation data
+testOnSimulatedData(nets,settings)
 
 %% 2. Train and implement network with echotimes corresponding to specific SUBJECT dataset
 clear all
