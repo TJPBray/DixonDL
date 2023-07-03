@@ -4,28 +4,57 @@
 
 %% 1. Simulations
 
+%% First single network only 
+% Note: trainSignleNetworks actually returns two networks but one is a duplicate of the first - simplifies code by avoiding need for separate single-network script) 
+
 %1.1 Specify settings
 settings.echotimes = [1.1:1.1:13.2]';
 settings.fieldStrength = 3;
 
-settings.SNR = 60;
-settings.noiseSD = 1/settings.SNR;
+% settings.SNR = 60;
+% settings.noiseSD = 1/settings.SNR;
 
-%1.2 Train networks with settings (echotimes, fieldstrength) for chosen
+%For noise-free simulations, set settings.noiseSD = 0; 
+settings.noiseSD = 0;
+
+%1.2 Train single network with uniform training distribution
+net = trainSingleNetwork(settings);
+
+%1.3 Test on simulation data
+[dlMaps,dlErrormaps] = testOnSimulatedData(net,settings)
+
+%1.4 Show comparison vs conventional fitting
+
+%Load conventional fitting data for comparison
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
+
+%Visualise comparison against conventional fitting
+createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps)
+
+
+%% Dual networks 
+
+%1.4 Train networks with settings (echotimes, fieldstrength) for chosen
 %dataset
 nets = trainNetworks(settings);
 
-%1.3 Test on simulation data
-testOnSimulatedData(nets,settings)
+%1.5 Test on simulation data
+[dlMaps,dlErrormaps] = testOnSimulatedData(nets,settings)
+
+%1.6 Show comparison vs conventional fitting
+%Load conventional fitting data for comparison
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
+
+% Visualise comparison against conventional fitting
+createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps)
 
 %% 2. Train and implement network with echotimes corresponding to specific SUBJECT dataset
 clear all
 
 %2.1 Load chosen dataset
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW101_bipolar.mat')
+% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW101_bipolar.mat')
 % load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW111_monopolar.mat')
-% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData.mat')
-
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData.mat')
 
 %Convert to imData if not already
 try
@@ -39,6 +68,7 @@ settings.fieldStrength = imDataAll.FieldStrength;
 
 %2.3 Provide guess for SNR and noiseSD
 SNRguess = 50;
+settings.SNR = SNRguess;
 settings.noiseSD = 1/SNRguess;
 
 %2.4 Train networks with settings (echotimes, fieldstrength) for chosen
@@ -97,20 +127,70 @@ colormap('parula')
 colorbar
 
 subplot(2,3,4)
-imshow(r2Low,[0 0.2])
+imshow(1000*r2Low,[0 200])
 title('R2* - Water network output')
 colorbar
 
 subplot(2,3,5)
-imshow(r2High,[0 0.2])
+imshow(1000*r2High,[0 200])
 title('R2* - Fat network output')
 colorbar
 
 subplot(2,3,6)
-imshow(r2Map,[0 0.2])
+imshow(1000*r2Map,[0 200])
 title('R2* - Likelihood-chosen output')
 colorbar
 
+%2.8 Display comparison with conventional fitting
+
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/LegsSwapDataResults.mat')
+
+yDisp = (65:175);
+
+figure
+subplot(3,2,1)
+imshow(maps.FFstandard(yDisp,:),[0 1])
+colormap('parula')
+title('PDFF - Conventional fitting')
+h=colorbar
+h.Label.String = "PDFF";
+h.FontSize=12; 
+
+subplot(3,2,3)
+imshow(ffMap(yDisp,:),[0 1])
+colormap('parula')
+title('PDFF - DL')
+h=colorbar
+h.Label.String = "PDFF";
+h.FontSize=12; 
+
+subplot(3,2,5)
+imshow(ffMap(yDisp,:) - maps.FFstandard(yDisp,:),[-1 1])
+title('PDFF difference (DL - conventional)')
+h=colorbar
+h.Label.String = "PDFF difference";
+h.FontSize=12; 
+
+subplot(3,2,2)
+imshow(1000*maps.R2standard(yDisp,:),[0 500])
+title('R2* - Conventional fitting')
+h=colorbar
+h.Label.String = "R2* (s^-^1)";
+h.FontSize=12; 
+
+subplot(3,2,4)
+imshow(1000*r2Map(yDisp,:),[0 500])
+title('R2* - DL')
+h=colorbar
+h.Label.String = "R2* (s^-^1)";
+h.FontSize=12; 
+
+subplot(3,2,6)
+imshow(1000*r2Map(yDisp,:) - 1000*maps.R2standard(yDisp,:),[-500 500])
+title('R2* difference (DL - conventional)')
+h=colorbar
+h.Label.String = "R2* difference (s^-^1)";
+h.FontSize=12; 
 
 %% 3. Train and implement network with echotimes corresponding to PHANTOM dataset
 
@@ -271,7 +351,7 @@ end
 %% 4. Hernando phantom data ROI analysis (split off to enable rapid modification of figures)
 
 %Folder for analysis
-saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/Results';
+saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/Hernando phantom';
 saveFolderInfo=dir(saveFolder);
 
 % for n=1:(numel(saveFolderInfo)-2)
@@ -329,7 +409,7 @@ protocol = [1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4];
 
 [tableVar] = tabulateCoeffsDL(ff,regressionModels,site, protocol,ReferenceValues,saveFolderInfo);
 
-
+legend('Unity', 'Site 1', 'Site 2', 'Site 3', 'Site 4', 'Site 5', 'Site 6', 'Site 7')
 
 
 
