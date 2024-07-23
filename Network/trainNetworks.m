@@ -20,7 +20,7 @@ echotimes=settings.echotimes;
 rng(5)
 
 %Specify dataset size
-sz = 1000;
+sz = 20000;
 
 %Specify curtail factor to restrict R2* values (avoids ambiguity at higher
 %R2* due to increased peak width) 
@@ -52,7 +52,6 @@ noiseSD = settings.noiseSD;
     
     %Create vector of ff values
     FFvec=ffRange(1) + (ffRange(2)-ffRange(1))*rand(sz(k),1);
-
 
 % 1.3 Specify R2* range
 r2max=0.5;
@@ -102,11 +101,34 @@ sCompNoisy = horzcat(real(sCompNoisy),imag(sCompNoisy));
 %Choose which data to use for training
 S = sMagNoiseFree;
 
-%% Normalise signals (divide by estimated S0)
+%% Normalise signals 
 
-Snorm = normaliseSignals(S,settings);
+%Normalise each voxel separately
+[Snorm , s0estimates] = normaliseSignals(S,settings);
 
+%Otherwise, normalise all together 
 S = Snorm;
+
+% if k == 1
+% 
+% % Either divide by estimated S0 or divide all voxels by maximum
+% % [Snorm, s0estimate(k)] = normaliseSignals(S,settings);
+% 
+% waterMax = max(S,[],'all');
+% 
+% Snorm = S / waterMax;
+% 
+% elseif k == 2 
+% 
+% Snorm = S / waterMax;
+% 
+% else ; 
+% end
+
+%NB: Use s0 estimate (i.e. s0estimate(1) from water training for fat
+%training) 
+
+
 
 %% 2.0 Split synthesised data into the training and validation set
 %
@@ -135,8 +157,6 @@ yTrain = trainingParams(idxTrain,:);
 xValidation = S(idxValidation,:);
 yValidation = trainingParams(idxValidation,:);
 
-% create a separate test set with values on a grid 
-
 %% 3.0 Build a minimal DNN
 
 % number of features
@@ -152,21 +172,29 @@ numOfOutput = 2;
 outputName = 'FF R2*';
 
 % create the layers, including relu layer
+% layers = [
+%     featureInputLayer(numOfFeatures, 'Name', inputName);
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
+%     regressionLayer('Name', outputName);
+%     ];
+
 layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+    eluLayer;
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+    eluLayer;
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+    eluLayer;
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+    eluLayer;
     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
     regressionLayer('Name', outputName);
     ];
-
-% layers = [
-%     featureInputLayer(numOfFeatures, 'Name', inputName);
-%     fullyConnectedLayer(numOfOutput, 'Name', 'fc1');
-%     regressionLayer('Name', outputName);
-%     ];
 
 % number of layers
 numOfLayers = size(layers, 1);
@@ -183,12 +211,15 @@ numOfLayers = size(layers, 1);
 % Note that Matlab implementation appears to discard the last few training
 % samples that do not completely fill up a mini-batch.
 %
-options = trainingOptions('sgdm', ...
-    'MaxEpochs',2000, ...
-    'InitialLearnRate',1e-2, ...
-    'MiniBatchSize', 100, ...
+
+options = trainingOptions('adam', ...
+    'MaxEpochs',1000, ...
+    'InitialLearnRate',1e-3, ...
+    'MiniBatchSize', 32, ...
+    'ValidationPatience', 20, ....
+    'L2Regularization',0,...
     'Verbose',false, ...
-    'Plots','training-progress'); %No regularisation as low FF values should not be preferred
+    'Plots','training-progress');   %No regularisation as low FF values should not be preferred
 
 % include the validation data
 options.ValidationData = {xValidation, yValidation};

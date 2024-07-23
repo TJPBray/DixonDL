@@ -1,4 +1,4 @@
-function [paramVec, sVec] = sVecFixedSpacing(S0,FFvals,R2vals,echotimes)
+function [paramVec, sVec] = sVecFixedSpacing(S0,FFvals,R2vals,settings)
 % function sVec = sVecFixedSpacing[FF,R2star]
 
 %Creates a vector of signal values with fixed spacing on the FF / R2*
@@ -8,6 +8,8 @@ function [paramVec, sVec] = sVecFixedSpacing(S0,FFvals,R2vals,echotimes)
 % S0 is the signal intensity at t=0
 % FFvalues is an ax1 vector of the chosen FF values
 % R2 values is a 1xb vector o the chosen R2 values
+% settings.tesla is field strength in tesla
+% settings.echotimes is echotime scheme
 
 % Output:
 % paramVec is an nxm matrix of parameter values where n is the number of
@@ -24,6 +26,9 @@ Fgrid=S0*FFgrid;
 Wgrid=S0-Fgrid;
 
 vgrid=repelem(R2vals,size(FFvals,1),1);%1ms-1 upper limit chosen to reflect Hernando et al. (went up to 1.2)
+
+echotimes = settings.echotimes;
+tesla = settings.fieldStrength;
 
 %1.2 Reshape into parameter vectors
 FFvec = reshape(FFgrid,[],1);
@@ -42,7 +47,7 @@ Wvec = S0 - Fvec;
 
 
 %1.5 Generate (normalised) signal samples
-sVec=MultiPeakFatSingleR2(echotimes,3,Fvec,Wvec,R2vec,fB);
+sVec=MultiPeakFatSingleR2(echotimes,tesla,Fvec,Wvec,R2vec,fB);
 
 end
 

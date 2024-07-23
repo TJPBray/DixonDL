@@ -4,57 +4,131 @@
 
 %% 1. Simulations
 
-%% First single network only 
-% Note: trainSignleNetworks actually returns two networks but one is a duplicate of the first - simplifies code by avoiding need for separate single-network script) 
-
-%1.1 Specify settings
+% Specify settings
 settings.echotimes = [1.1:1.1:13.2]';
+% settings.echotimes = [1.15,2.3,3.45,4.6,5.75,6.9]';
+
+% settings.echotimes = [0:0.05:10]';
+
 settings.fieldStrength = 3;
 
-% settings.SNR = 60;
-% settings.noiseSD = 1/settings.SNR;
-
 %For noise-free simulations, set settings.noiseSD = 0; 
-settings.noiseSD = 0;
+% settings.noiseSD = 0;
 
-%1.2 Train single network with uniform training distribution
+%% 1.1 First single network only 
+% Note: trainSignleNetworks actually returns two networks but one is a duplicate of the first - simplifies code by avoiding need for separate single-network script) 
+
+%Specify SNR to do this in the absence of noise
+settings.SNR = inf;
+settings.noiseSD = 1/settings.SNR;
+
+%Specify tuning parameters for inference (choice of network output)
+settings.tuning.useExtremeLowPdff = 0; 
+
+%Train single network with uniform training distribution
 net = trainSingleNetwork(settings);
 
-%1.3 Test on simulation data
-[dlMaps,dlErrormaps] = testOnSimulatedData(net,settings)
+%Test on simulation data (noise-free)
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
 
-%1.4 Show comparison vs conventional fitting
+%Test on simulation data (with noise)
+settings.SNR = 60;
+settings.noiseSD = 1/settings.SNR;
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
+
+%Show comparison vs conventional fitting
 
 %Load conventional fitting data for comparison
 load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
 
 %Visualise comparison against conventional fitting
-createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps)
+createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps, dlSDMaps, sdmaps)
 
+%% 1.2 Dual networks 
 
-%% Dual networks 
+%Specify SNR to do this in the absence of noise
+settings.SNR = inf;
+settings.noiseSD = 1/settings.SNR;
 
-%1.4 Train networks with settings (echotimes, fieldstrength) for chosen
-%dataset
+%Specify tuning parameters for inference (choice of network output)
+settings.tuning.useExtremeLowPdff = 0; 
+
+%Train networks with settings (echotimes, fieldstrength) for chosen dataset
 nets = trainNetworks(settings);
 
-%1.5 Test on simulation data
-[dlMaps,dlErrormaps] = testOnSimulatedData(nets,settings)
+%Test on simulation data (noise-free)
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
 
-%1.6 Show comparison vs conventional fitting
+%Test on simulation data (with noise)
+settings.SNR = 60;
+settings.noiseSD = 1/settings.SNR;
+
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+
+%Show comparison vs conventional fitting
 %Load conventional fitting data for comparison
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
 
-% Visualise comparison against conventional fitting
-createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps)
+%Visualise comparison against conventional fitting
+createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps, dlSDMaps,sdmaps)
+
+
+%% 1.2 Dual networks, investigation of normalisation  
+
+%Specify inaccurate normalisation (normInaccuracy is multipled by the estimated S0 prior to normalisation: 0.9 means S0 estimate is too low , 1.1
+%means S0 estimate is too high) 
+settings.normInaccuracyConstant = 1.1;
+
+%Test on simulation data (noise-free)
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+
+%Test on simulation data (with noise)
+settings.SNR = 60;
+settings.noiseSD = 1/settings.SNR;
+
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+
+%Show comparison vs conventional fitting
+%Load conventional fitting data for comparison
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
+
+%Visualise comparison against conventional fitting
+createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps, dlSDMaps,sdmaps)
+
+
+
+%% 1.3 Test accuracy of normalisation
+
+% Load chosen dataset to get settings for that dataset
+load('site1_begin_3T_protocol2.mat')
+
+% Get settings
+settings.echotimes = 1000*imDataAll.TE;
+settings.fieldStrength = imDataAll.FieldStrength;
+
+% Provide guess for SNR and noiseSD
+SNRguess = 50;
+% settings.SNR = SNRguess;
+% settings.noiseSD = 1/SNRguess;
+settings.noiseSD = 0;
+
+%Test normalisation
+testNormalisation(settings)
+
 
 %% 2. Train and implement network with echotimes corresponding to specific SUBJECT dataset
 clear all
 
 %2.1 Load chosen dataset
-% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW101_bipolar.mat')
+
+% Example cases:
+% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW101_bipolar.mat'); slice = 20;
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData.mat'); slice = 20;
+% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen.mat'); slice = 40; 
+% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriThorax.mat'); slice = 40; 
+
+% Others:
 % load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW111_monopolar.mat')
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData.mat')
 
 %Convert to imData if not already
 try
@@ -75,23 +149,34 @@ settings.noiseSD = 1/SNRguess;
 %dataset
 nets = trainNetworks(settings);
 
-%2.5 Check working ok on simulation data
+%Specify tuning parameters for inference (choice of network output)
+settings.tuning.useExtremeLowPdff = 0; 
+
+%2.5 Check network performance on simulation data
 testOnSimulatedData(nets,settings)
 
 %2.6 Use networks to get predicts for the chosen dataset
-
-%Specify the slice 
-slice = 20;
 
 %Get the signals for the chosen slice
 for echoN=1:numel(settings.echotimes)  
 complexSlice(:,:,echoN)=imDataAll.images(:,:,slice,1,echoN);
 magnitudeSlice(:,:,echoN)=abs(complexSlice(:,:,echoN));
 
-%Include normalisation by the first echo
-% magnitudeSlice(:,:,:) = magnitudeSlice(:,:,:) / magnitudeSlice(:,:,1);
-
 end
+
+%Remove extreme outlying values
+threshold = prctile(magnitudeSlice,95,'all');
+for y = 1:(size(magnitudeSlice))
+    for x = 1:(size(magnitudeSlice))
+
+        values = magnitudeSlice(y,x,:);
+        if max(values,[],'all') > threshold
+            magnitudeSlice(y,x,:) = values .* (threshold/max(values,[],'all'));
+        else ;
+        end
+    end
+end
+
 
 %Call the function
 predictions = testOnImage(magnitudeSlice,nets,settings);
@@ -101,9 +186,13 @@ ffLow = predictions.prediction1(:,:,1);
 ffHigh = predictions.prediction2(:,:,1);
 ffMap = predictions.prediction3(:,:,1);
 
-r2Low = predictions.rawPrediction1(:,:,2);
-r2High = predictions.rawPrediction2(:,:,2);
+r2Low = predictions.prediction1(:,:,2);
+r2High = predictions.prediction2(:,:,2);
 r2Map = predictions.prediction3(:,:,2);
+
+%Remove NaNs
+ffMap(isnan(ffMap)) = 0;
+r2Map(isnan(r2Map)) = 0;
 
 %2.7 Display maps
 
@@ -141,16 +230,16 @@ imshow(1000*r2Map,[0 200])
 title('R2* - Likelihood-chosen output')
 colorbar
 
-%2.8 Display comparison with conventional fitting
+% 2.8 Display comparison with conventional fitting
 
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/LegsSwapDataResults.mat')
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/FW101_results_sigmaFromFit.mat')
 
-yDisp = (65:175);
+yDisp = (70:170);
 
 figure
 subplot(3,2,1)
 imshow(maps.FFstandard(yDisp,:),[0 1])
-colormap('parula')
+
 title('PDFF - Conventional fitting')
 h=colorbar
 h.Label.String = "PDFF";
@@ -192,14 +281,61 @@ h=colorbar
 h.Label.String = "R2* difference (s^-^1)";
 h.FontSize=12; 
 
-%% 3. Train and implement network with echotimes corresponding to PHANTOM dataset
+%% Display comparison with vendor
+figure
+p1 = subplot(2,3,1)
+imshow(ffMap(10:182,10:296),[0 1])
+title('PDFF - DL')
+h=colorbar
+colormap(p1,'parula')
+h.Label.String = "PDFF";
+h.FontSize=12; 
+
+p2 = subplot(2,3,4)
+imshow(1000*r2Map(10:182,10:296),[0 200])
+title('R2* DL')
+h=colorbar
+h.Label.String = "R2* (s^-^1)";
+h.FontSize=12; 
+
+p3 = subplot(2,3,2)
+imshow(ffMDQ(10:182,10:296,slice)*0.001,[0 1])
+title('PDFF - vendor')
+h=colorbar
+colormap(p3, 'parula')
+h.Label.String = "PDFF";
+h.FontSize=12; 
+
+p4 = subplot(2,3,5)
+imshow(r2MDQ(10:182,10:296,slice),[0 200])
+title('R2* - vendor')
+h=colorbar
+h.Label.String = "R2* (s^-^1)";
+h.FontSize=12; 
+
+p5 = subplot(2,3,3)
+imshow(ffMap(10:182,10:296) - ffMDQ(10:182,10:296,slice)*0.001,[-1 1])
+title('PDFF difference (DL - vendor)')
+h=colorbar
+h.Label.String = "PDFF difference";
+h.FontSize=12; 
+
+
+p6 = subplot(2,3,6)
+imshow(1000*r2Map(10:182,10:296) - r2MDQ(10:182,10:296,slice),[-200 200])
+title('R2* difference (DL - vendor)')
+h=colorbar
+h.Label.String = "R2* difference (s^-^1)";
+h.FontSize=12; 
+
+%% 3A. TRAIN AND IMPLEMENT network with echotimes corresponding to PHANTOM dataset
 
 %3.1 Define folders for import of multiecho data and ROIs
 imageFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando data';
 roiFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando ROIs';
 
 %Folder for saving
-saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/Results';
+saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomResults';
 
 %3.2 Get image and ROI folder info
 imageFolderInfo=dir(imageFolder);
@@ -215,7 +351,7 @@ ReferenceValues.FF = ([0; 0.026; 0.053; 0.079; 0.105; 0.157; 0.209; 0.312; 0.413
 sl=2;
 
 %3.5 Loop over datasets to fit each dataset
-for n=23:28
+for n=2:28
 
 %Clear unwanted variables
 clear complexSlice magnitudeSlice
@@ -300,8 +436,8 @@ ffLow = predictions.prediction1(:,:,1);
 ffHigh = predictions.prediction2(:,:,1);
 ffMap = predictions.prediction3(:,:,1);
 
-r2Low = predictions.rawPrediction1(:,:,2);
-r2High = predictions.rawPrediction2(:,:,2);
+r2Low = predictions.prediction1(:,:,2);
+r2High = predictions.prediction2(:,:,2);
 r2Map = predictions.prediction3(:,:,2);
 
 %3.16 Display maps
@@ -343,19 +479,197 @@ colorbar
 % %3.17 Save variables (mapsWithSigma,filteredSigma,maps)
 
 saveFileName = strcat('MAPS_', dataFileName);
-save(fullfile(saveFolder,saveFileName), 'predictions');
+save(fullfile(saveFolder,saveFileName), 'predictions','nets');
 
 end
+
+
+%% 3B. IMPLEMENT networks with echotimes corresponding to PHANTOM datasets
+
+%3.1 Define folders for import of multiecho data and ROIs
+imageFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando data';
+roiFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando ROIs';
+
+%Folder for loading from
+loadFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomResults';
+
+%Folder for saving to
+saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomResultsNew';
+
+%3.2 Get image and ROI folder info
+imageFolderInfo=dir(imageFolder);
+roiFolderInfo=dir(roiFolder);
+loadFolderInfo=dir(loadFolder);
+saveFolderInfo=dir(saveFolder);
+
+%3.3. Specify reference values in phantoms
+% Create grid of reference values based on phantom structure
+ReferenceValues.FF = ([0; 0.026; 0.053; 0.079; 0.105; 0.157; 0.209; 0.312; 0.413; 0.514; 1]);
+% ReferenceValues.R2 = repelem([0; 0; 0; 0],1,5);
+
+%3.4 Specify slice (use 1 if only 1 slice)
+sl=2;
+
+%3.5 Loop over datasets to fit each dataset
+for n=4:4
+
+%Clear unwanted variables
+clear complexSlice magnitudeSlice nets predictions
+
+%3.5 Define filenames for multiecho data and ROIs
+dataFileName = imageFolderInfo(n+2).name
+roiFileName = roiFolderInfo(n+2).name;
+
+%3.6 Import data
+struct=load(fullfile(imageFolder,dataFileName));
+imData=struct.imDataAll;
+fwmc_ff=struct.fwmc_ff;
+fwmc_r2star=struct.fwmc_r2star;
+
+%3.7 Import ROIs
+mask = niftiread(fullfile(roiFolder,roiFileName));
+roi.mask=mask(:,:,sl);
+roi.slice=sl;
+
+    % phantomImage = niftiread(fullfile(folder,dataFileName));
+
+% % Show check image for alignment
+% figure
+% subplot(2,3,1)
+% imshow(phantomROIs(:,:,1),[])
+% title('ROIs')
+% 
+% subplot(2,3,2)
+% imshow(abs(imData.images(:,:,sl,1,1)),[])
+% title('Magnitude image of phantom (first echo)')
+% 
+% subplot(2,3,3)
+% imshow(fwmc_ff(:,:,2),[0 100])
+% title('PDFF map of phantom')
+% 
+% subplot(2,3,4)
+% imshow(phantomROIs(:,:,sl),[0 12])
+% title('Phantom ROIs')
+
+% Perform fitting of multiecho data, using sigma estimate from phantom ROIs
+
+% %3.8 Specify indent (to avoid fitting dead space at edge of phantom) and
+% %filtersize
+% imData.fittingIndent=30;
+
+%3.9 Get settings
+settings.echotimes = 1000*imData.TE;
+settings.fieldStrength = imData.FieldStrength;
+
+%Specify echotimes shape to ensure consistently correct
+settings.echotimes = reshape(settings.echotimes,[6 1]);
+
+%3.10 Provide guess for SNR and noiseSD
+if round(settings.fieldStrength) == 3 %If field strength is 3
+    SNRguess = 50;
+
+elseif round(2*settings.fieldStrength) == 3 %If field strength is 1.5
+    SNRguess = 30;
+else ;
+end
+
+settings.noiseSD = 1/SNRguess;
+
+%3.11 Load networks corresponding to chosen dataset
+loadFileName = strcat('MAPS_', dataFileName);
+load(fullfile(loadFolder,loadFileName));
+
+%Specify tuning parameters for inference (choice of network output)
+settings.tuning.useExtremeLowPdff = 1; 
+
+%3.12 Check performance on simulation data
+% testOnSimulatedData(nets,settings)
+
+%3.13 Get the signals for the chosen slice
+for echoN=1:numel(settings.echotimes)  
+complexSlice(:,:,echoN)=imData.images(:,:,sl,1,echoN);
+magnitudeSlice(:,:,echoN)=abs(complexSlice(:,:,echoN));
+end
+
+%Remove extreme outlying values (particularly for in vivo data as artefacts
+%are present)
+% threshold = prctile(magnitudeSlice,99,'all');
+% for y = 1:(size(magnitudeSlice))
+%     for x = 1:(size(magnitudeSlice))
+% 
+%         values = magnitudeSlice(y,x,:);
+%         if max(values,[],'all') > threshold
+%             magnitudeSlice(y,x,:) = values .* (threshold/max(values,[],'all'));
+%         else ;
+%         end
+%     end
+% end
+
+%3.14 Get the predictions for the chosen slice
+predictions = testOnImage(magnitudeSlice,nets,settings);
+
+%3.15 Generate maps
+ffLow = predictions.prediction1(:,:,1);
+ffHigh = predictions.prediction2(:,:,1);
+ffMap = predictions.prediction3(:,:,1);
+
+r2Low = predictions.prediction1(:,:,2);
+r2High = predictions.prediction2(:,:,2);
+r2Map = predictions.prediction3(:,:,2);
+
+%3.16 Display maps
+
+figure
+subplot(2,3,1)
+imshow(ffLow,[0 1])
+title('PDFF - Water network output')
+colormap('parula')
+colorbar
+
+subplot(2,3,2)
+imshow(ffHigh,[0 1])
+title('PDFF - Fat network output')
+colormap('parula')
+colorbar
+
+subplot(2,3,3)
+imshow(ffMap,[0 1])
+title('PDFF - Likelihood-chosen output')
+colormap('parula')
+colorbar
+
+subplot(2,3,4)
+imshow(r2Low,[0 0.2])
+title('R2* - Water network output')
+colorbar
+
+subplot(2,3,5)
+imshow(r2High,[0 0.2])
+title('R2* - Fat network output')
+colorbar
+
+subplot(2,3,6)
+imshow(r2Map,[0 0.2])
+title('R2* - Likelihood-chosen output')
+colorbar
+
+%3.17 Save variables (mapsWithSigma,filteredSigma,maps)
+
+saveFileName = strcat('MAPS_', dataFileName);
+save(fullfile(saveFolder,saveFileName), 'predictions','nets');
+
+end
+
 
 
 %% 4. Hernando phantom data ROI analysis (split off to enable rapid modification of figures)
 
 %Folder for analysis
-saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/Hernando phantom';
+saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomResults';
 saveFolderInfo=dir(saveFolder);
 
 % for n=1:(numel(saveFolderInfo)-2)
-for n=1:28
+for n=1:8
 
 %3.1 Define filenames for multiecho data and ROIs
 dataFileName = imageFolderInfo(n+2).name
@@ -402,7 +716,6 @@ end
 
 
 %3.7 Tabulate coefficients and get figures
-
 
 site = [1 1 1 1 7 7 7 7 2 2 2 2 3 3 3 3 4 4 4 4 5 5 5 5 6 6 6 6];
 protocol = [1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4 1 2 3 4];

@@ -161,7 +161,7 @@ layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
-    fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+    eluLayer(numOfFeatures, 'Name', 'fc3');
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
     regressionLayer('Name', outputName);

@@ -14,11 +14,11 @@ title('1.5T protocol 2')
 
 g(3)=subplot(2,2,3)
 plot(ReferenceValues.FF,ReferenceValues.FF,'k-','LineWidth',1)
-title('3T protocol 1')
+title('3T protocol 3')
 
 g(4)=subplot(2,2,4)
 plot(ReferenceValues.FF,ReferenceValues.FF,'k-','LineWidth',1)
-title('3T protocol 2')
+title('3T protocol 4')
 
 % % Rician subplots
 % r(1)=subplot(4,2,2)

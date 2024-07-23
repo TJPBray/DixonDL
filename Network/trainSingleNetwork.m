@@ -20,15 +20,11 @@ echotimes=settings.echotimes;
 rng(5)
 
 %Specify dataset size
-sz = 1000;
+sz = 20000;
 
 %Specify curtail factor to restrict R2* values (avoids ambiguity at higher
 %R2* due to increased peak width) 
 curtail = 1; %1 = no restriction of training range
-
-%Specify dataset size for reduced dataset 
-sz(2) = sz*curtail; 
-
 
 % 1.1 First try uniformly spaced samples over the parameter space (vary
 % both FF and R2*)
@@ -45,7 +41,7 @@ noiseSD = settings.noiseSD;
     ffRange = [0 1];
     
     %Create vector of ff values
-    FFvec = rand(sz(1),1);
+    FFvec=ffRange(1) + (ffRange(2)-ffRange(1))*rand(sz,1);
 
 % 1.3 Specify R2* range
     r2max=0.5;
@@ -76,10 +72,22 @@ sMagNoiseFree = abs(sNoiseFree);
 
 %Create noise
 realnoise=(noiseSD)*randn(sz(1),numel(echotimes));
-imagnoise=1i*(noiseSD)*randn(sz(1),numel(echotimes));
+imagnoise=(noiseSD)*randn(sz(1),numel(echotimes));
+
+noise = realnoise + 1i*imagnoise;
+
+% %Visualise noise
+% figure
+% subplot(1,2,1)
+% scatter(real(noise),imag(noise))
+% title('Complex noise')
+% 
+% subplot(1,2,2)
+% hist(abs(noise(:,1)),20)
+% title('Magnitude of noise')
 
 % Add noise to signal to create noisy signal
-sCompNoisy = sNoiseFree + realnoise + imagnoise; 
+sCompNoisy = sNoiseFree + noise; 
 
 %Get noise magnitude data
 sMagNoisy=abs(sCompNoisy);
@@ -125,7 +133,7 @@ yValidation = trainingParams(idxValidation,:);
 
 % create a separate test set with values on a grid 
 
-%% 3.0 Build a minimal DNN
+%% 3.0 Build a DNN
 
 % number of features
 numOfFeatures = size(S,2);
@@ -140,21 +148,30 @@ numOfOutput = 2;
 outputName = 'FF R2*';
 
 % create the layers, including relu layer
+% layers = [
+%     featureInputLayer(numOfFeatures, 'Name', inputName);
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
+%     regressionLayer('Name', outputName);
+%     ];
+
+% Create the layers, including elu layer
 layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+    eluLayer;
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+    eluLayer;
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+    eluLayer;
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+    eluLayer;
     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
     regressionLayer('Name', outputName);
     ];
-
-% layers = [
-%     featureInputLayer(numOfFeatures, 'Name', inputName);
-%     fullyConnectedLayer(numOfOutput, 'Name', 'fc1');
-%     regressionLayer('Name', outputName);
-%     ];
 
 % number of layers
 numOfLayers = size(layers, 1);
@@ -171,10 +188,12 @@ numOfLayers = size(layers, 1);
 % Note that Matlab implementation appears to discard the last few training
 % samples that do not completely fill up a mini-batch.
 %
-options = trainingOptions('sgdm', ...
-    'MaxEpochs',2000, ...
-    'InitialLearnRate',1e-2, ...
-    'MiniBatchSize', 100, ...
+options = trainingOptions('adam', ...
+    'MaxEpochs',1000, ...
+    'InitialLearnRate',1e-3, ...
+    'MiniBatchSize', 32, ...
+    'ValidationPatience', 20, ....
+    'L2Regularization',0,...
     'Verbose',false, ...
     'Plots','training-progress'); %No regularisation as low FF values should not be preferred
 

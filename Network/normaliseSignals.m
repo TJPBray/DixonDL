@@ -1,16 +1,22 @@
-function normSignals = normaliseSignals(signals,settings)
-%function normSignals = normaliseSignals(signals)
+function [normSignals, s0estimates] = normaliseSignals(signals,settings)
+%function [normSignals , s0estimates] = normaliseSignals(signals)
 
 %Approximates S0 and normalises by that (a surrogate for a 'first guess'
 %with deep learning fitting)
 
 %Inputs:
 
-%signals is n x t matrix where n is the number of instantiations and t is
+%signals is m x t matrix where m is the number of instantiations and t is
 %the number of echo times
 
 %settings contains settings.echotimes, which is a t X 1 column vector containing
 %the echotimes, and settings.fieldStrength
+
+%Outputs:
+%normSignals is m x t matrix of normalised signals where m is the number of instantiations and t is
+%the number of echo times
+
+%s0estimates is m x 1 vector of s0 estimates
 
 %t.bray@ucl.ac.uk
 
@@ -52,16 +58,43 @@ for k = 1:dim
 
 signalRow = signals(k,:);
 
-%2.2. Approximate S0 by interpolating between ind1 and ind2
+%2.2. Approximate S0 by
 
-r2estimate = -log(signalRow(ind1)/signalRow(ind2))...
+% (i) extrapolating back to S0 from ind1 and ind2
+
+r2estimate(k,:) = -log(signalRow(ind1)/signalRow(ind2))...
     /(echotimes(ind1) - echotimes(ind2));
 
-s0estimate = signalRow(ind1)*exp(r2estimate*echotimes(ind1));
+s0estimate1 = signalRow(ind1)*exp(r2estimate(k,:)*echotimes(ind1));
 
-%% 3. Normalise by s0 estimate
+% or
 
-normSignals(k,:) = signalRow ./ s0estimate; 
+% (ii) taking the max of the signal vectors
+
+s0estimate2 = max(signalRow);
+
+%Choose the higher estimate of these two options
+s0estimates(k,1) = max(s0estimate1, s0estimate2);
+
+
+%2.3 Incorporate inaccurate S0 normalisation if this has been specified
+if isfield(settings,'normInaccuracyConstant') == 1
+s0estimates(k,1) = s0estimates(k,:)*settings.normInaccuracyConstant;
+else;
+end
+
+%% 3. Strategy 1: Normalise by different s0 estimate for each voxel
+normSignals(k,:) = signalRow ./ s0estimates(k,:); 
+
+end
+
+%% 4. Strategy 2: Normalise by mean S0 (outside loop)
+% Specify correction factor for particular protocol (for now just leave as
+% % 1)
+% correctionFactor = 1;
+
+% %Normalise
+% normSignals = signals / max(signals,[],'all'); 
 
 end
 

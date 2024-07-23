@@ -56,10 +56,10 @@ view(0,90)
 subplot(2,2,2)
 image(1000*r2Predictions,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 1000];
+ax.CLim=[0 500];
 FigLabels;
 xticks([1:2:21]);
-xticklabels({'0','.50', '100', '150', '200', '250', '300', '350', '400', '450','500'});
+xticklabels({'0','50', '100', '150', '200', '250', '300', '350', '400', '450','500'});
 xlabel('R2* (s^-^1)','FontSize',12)
 yticks([0 10 20 30 40 50 60 70 80 90 100]);
 yticklabels({'0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0'});
@@ -105,6 +105,8 @@ h=colorbar
 h.Label.String = "R2* error (s^-^1)";
 h.Label.FontSize = 12;
 view(0,90)
+
+
 
 %% Export 
 maps.ff = ffPredictions;
