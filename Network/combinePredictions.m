@@ -53,10 +53,10 @@ combinedPredictions = choiceVec.*pred1 + (1-choiceVec).*pred2;
 
 %% Use information about extreme values
 % If extreme R2*, assume incorrect and make a choice on this basis 
+% 
 
 for k = 1:numel(size(pred1,1))
 
-% If extreme low R2* from fat network, assume incorrect and make a choice on this basis 
 if rawPred2(k,2) < 0
 combinedPredictions(k,:) = pred1(k,:);
 
