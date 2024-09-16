@@ -47,7 +47,7 @@ yticks([0 10 20 30 40 50 60 70 80 90 100]);
 yticklabels({'0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0'});
 ylabel('Fat fraction','FontSize',12)
 title('FF values')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
 view(0,90)
@@ -65,7 +65,7 @@ yticks([0 10 20 30 40 50 60 70 80 90 100]);
 yticklabels({'0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0'});
 ylabel('Fat fraction','FontSize',12)
 title('R2* values')
-h=colorbar
+h=colorbar;
 h.Label.String = "R2* (s^-^1)";
 h.Label.FontSize = 12;
 view(0,90)
@@ -73,7 +73,7 @@ view(0,90)
 subplot(2,2,3)
 image(ffError,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[-0.1 0.1];
+ax.CLim=[-1 1];
 FigLabels;
 colorbar
 xticks([1:2:21]);
@@ -83,7 +83,7 @@ yticks([0 10 20 30 40 50 60 70 80 90 100]);
 yticklabels({'0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0'});
 ylabel('Fat fraction','FontSize',12)
 title('FF error')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
 view(0,90)
@@ -101,7 +101,7 @@ yticks([0 10 20 30 40 50 60 70 80 90 100]);
 yticklabels({'0','0.1','0.2','0.3','0.4','0.5','0.6','0.7','0.8','0.9','1.0'});
 ylabel('Fat fraction','FontSize',12)
 title('R2* error')
-h=colorbar
+h=colorbar;
 h.Label.String = "R2* error (s^-^1)";
 h.Label.FontSize = 12;
 view(0,90)

@@ -1,5 +1,5 @@
-function [likVec,sseVec] = sseVecCalc (echotimes, tesla, predictionVec, S, sigma) 
-% function likVec,sseVec = sseVecCalc (echotimes, tesla, predictionVec, S) 
+function [sseVec,likVec] = sseVecCalc (echotimes, tesla, predictionVec, S, sigma) 
+% function sseVec, likVec = sseVecCalc (echotimes, tesla, predictionVec, S) 
 
 %Calculates a vector of SSE values from the predictions of neural network
 
@@ -12,23 +12,29 @@ function [likVec,sseVec] = sseVecCalc (echotimes, tesla, predictionVec, S, sigma
 % 1. Get n
 n=size(predictionVec,1);
 
+% Prefill arrays 
+p = zeros(4,1);
+
+
 %2. Loop over n values
-for k=1:n
+parfor k=1:n
     
     %2.1 First specify components of p
-    p(1)=predictionVec(k,1);
-    p(2)=1-p(1);
-    p(3)=predictionVec(k,2);
-    p(4)=0;
+    f=predictionVec(k,1)*predictionVec(k,3);
+    w=(1-predictionVec(k,1))*predictionVec(k,3);
+    v=predictionVec(k,2);
+    fB=0;
+
+    p = [f; w; v; fB];
+    p = double(p);
 
 Smeasured=S(k,:);
 
     %2.2 Calculate likelihood (use Gaussian initially)
     [gaussianLikVec(k),sseVec(k)] = R2Obj(p,echotimes,tesla,Smeasured,sigma); %Use sigma of 0 - note that likelilihood values with be NaN
-   
+
     %2.2 Calculate likelihood (Rician)
-     %2.2 Calculate likelihood (use Gaussian initially)
-    [ricianLikVec(k),sseVec(k)] = R2Obj(p,echotimes,tesla,Smeasured,sigma); %Use sigma of 0 - note that likelilihood values with be NaN
+    [ricianLikVec(k)] = R2RicianObj(p,echotimes,tesla,Smeasured,sigma); %Use sigma of 0 - note that likelilihood values with be NaN
 
 end
 

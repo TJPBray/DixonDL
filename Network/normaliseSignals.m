@@ -48,9 +48,14 @@ end
 
 %% Get dimensions of signals (may be matrix with multiple different signals) and loop through each set of signals
 
+%Set number of loops
 dim = size(signals,1);
 
-for k = 1:dim
+%Prefill arrays
+signalRow = zeros(1,size(signals,2));
+s0estimates = zeros(dim,1);
+
+parfor k = 1:dim
 
 %% 2. Find s0 estimate for each set of signals
 
@@ -74,17 +79,18 @@ s0estimate1 = signalRow(ind1)*exp(r2estimate(k,:)*echotimes(ind1));
 s0estimate2 = max(signalRow);
 
 %Choose the higher estimate of these two options
-s0estimates(k,1) = max(s0estimate1, s0estimate2);
+s0estimate3 = max(s0estimate1, s0estimate2);
 
+s0estimates(k) = s0estimate3;
 
 %2.3 Incorporate inaccurate S0 normalisation if this has been specified
-if isfield(settings,'normInaccuracyConstant') == 1
-s0estimates(k,1) = s0estimates(k,:)*settings.normInaccuracyConstant;
-else;
-end
+% if isfield(settings,'normInaccuracyConstant') == 1
+% s0estimates(k,1) = s0estimates(k,:)*settings.normInaccuracyConstant;
+% else;
+% end
 
 %% 3. Strategy 1: Normalise by different s0 estimate for each voxel
-normSignals(k,:) = signalRow ./ s0estimates(k,:); 
+normSignals(k,:) = signalRow ./ s0estimate3; 
 
 end
 

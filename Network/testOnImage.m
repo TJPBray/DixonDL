@@ -12,8 +12,9 @@ sliceIntensity = mean(image,[1 2]);
 %Filter image 
 % filteredImage = imgaussfilt(image(:,:,slice))
 
-%Take max 
-maxS = max(image(:,:,slice),[],'all');
+%Take 99th percentile 
+prc = prctile(image(:,:,2),99,'all');
+maxImage = max(image(:,:,:),[],'all');
 
 %% Loop over voxels 
 
@@ -24,23 +25,46 @@ indent = 0;
 rawPrediction1 = zeros(size(image,1),size(image,2),2);
 rawPrediction2 = rawPrediction1;
 
-%Start loop
-for y = indent+1:(size(image,1)-indent)
+%Vectorised implementation of prediction
+signalsMat = reshape(image,[size(image,1)*size(image,2),size(image,3)]);
 
-parfor x = indent+1:(size(image,2)-indent)
+%Normalise signals
+normalisedSignalsMat = normaliseSignals(signalsMat,settings);
 
-signals = image(y,x,:);
-signals = reshape(signals,[1 6]);
-
-normalisedSignals = normaliseSignals(signals,settings);
 
 %Get predictions
-prediction1(y,x,:)=nets.net1.predict(normalisedSignals);
-prediction2(y,x,:)=nets.net2.predict(normalisedSignals);
 
-%Combine predictions
+prediction1 =nets.net1.predict(normalisedSignalsMat);
+prediction2 =nets.net2.predict(normalisedSignalsMat);
+
 %With image-based normalisation for likelihood calc
-prediction3(y,x,:) = combinePredictions(prediction1(y,x,:), prediction2(y,x,:), settings, signals/maxS);
+prediction3 = combinePredictions(prediction1, prediction2, settings, signalsMat, normalisedSignalsMat);
+
+
+%Reshape
+prediction1 = reshape(prediction1, [size(image,1) size(image,2) 2]);
+prediction2 = reshape(prediction2, [size(image,1) size(image,2) 2]);
+prediction3 = reshape(prediction3, [size(image,1) size(image,2) 3]);
+
+
+
+% %Start loop
+% for y = indent+1:(size(image,1)-indent)
+
+% parfor x = indent+1:(size(image,2)-indent)
+% 
+% signals = image(y,x,:);
+% signals = reshape(signals,[1 6]);
+% 
+% normalisedSignals = normaliseSignals(signals,settings);
+% 
+% %Get predictions
+% prediction1(y,x,:)=nets.net1.predict(normalisedSignals);
+% prediction2(y,x,:)=nets.net2.predict(normalisedSignals);
+% 
+% %Combine predictions
+% %With image-based normalisation for likelihood calc
+% prediction3(y,x,:) = combinePredictions(prediction1(y,x,:), prediction2(y,x,:), settings, signals/maxS);
 
 %With voxel-based normalisation for likelihood calc
 % prediction3(y,x,:) = combinePredictions(prediction1(y,x,:), prediction2(y,x,:), settings, normalisedSignals);
@@ -91,10 +115,10 @@ prediction3(y,x,:) = combinePredictions(prediction1(y,x,:), prediction2(y,x,:), 
 % else ;
 % end
 
-end
-
-y
-end
+% end
+% 
+% y
+% end
 
 %% Output predictions
 %With parameter clipping prior to choice

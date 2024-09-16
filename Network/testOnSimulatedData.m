@@ -10,12 +10,16 @@ r2max=0.5;
 
 %Extract echotimes
 echotimes = settings.echotimes;
-noiseSD = settings.noiseSD;
 tesla = settings.fieldStrength;
 
+%Set parameters for simulation
 S0=10;
 FFvals = (0:0.01:1)';
 R2vals = (0:0.05*r2max:r2max);
+   
+%Set noise SD based on SNR
+noiseSD = S0/settings.SNR;
+settings.noiseSD = settings;
 
 %Select number of repetitions
 
@@ -26,8 +30,18 @@ R2vals = (0:0.05*r2max:r2max);
 %Create yTest parameter vector
 yTest = paramVec;
 
-%Loop over noise instantiations 
 
+%If noise free simulation, set noiseSD = 0
+if settings.noiseFree == 1
+
+    settings.sigmaEst = 0
+else 
+% Otherwise, estimate noiseSD using test voxels
+    settings.sigmaEst = estimateSigmaForSimulation(S0, settings, 100);
+end
+
+
+%Loop over noise instantiations 
 reps = 100;
 
 for r = 1:reps
@@ -68,7 +82,9 @@ choiceVecRic(1:2121,1,1:100) = zeros;
 choiceVecSSE(1:2121,1,1:100) = zeros;
 choiceVec = choiceVecSSE;
 
+
 %% Loop over 'voxels' / noise instantiations (conventional for loop)
+tic
 parfor r = 1:reps
 
 %Get net1 predictions
@@ -78,37 +94,31 @@ predictionVec1(:,:,r)=nets.net1.predict(xTest(:,:,r));
 predictionVec2(:,:,r)=nets.net2.predict(xTest(:,:,r));
 
 %Combine predictions 
-% (NB: xTest should be normalised if predictions were generated with normalised data) 
-predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, (xTestNoNorm(:,:,r))/max(xTestNoNorm(:,:,r),[],'all'));
-
-% predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTest(:,:,r));
-
-% predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTestNoNorm(:,:,r));
-
-% %Net1
-% predictionVec1(:,:,r)=nets.net1.predict(xTest(:,:,r));
-% [likVec1(:,:,r),sseVec1(:,:,r)] = sseVecCalc (echotimes, tesla, predictionVec1(:,:,r), xTestNoNorm(:,:,r), noiseSD);
-% 
-% %Net2
-% predictionVec2(:,:,r)=nets.net2.predict(xTest(:,:,r));
-% [likVec2(:,:,r),sseVec2(:,:,r)] = sseVecCalc (echotimes, tesla, predictionVec2(:,:,r), xTestNoNorm(:,:,r), noiseSD);
-% 
-% %8.2 Create binary vector to choose between values
-% choiceVecRic(:,:,r)=(likVec1(:,:,r)>likVec2(:,:,r))';
-% choiceVecSSE(:,:,r)=(sseVec1(:,:,r)<sseVec2(:,:,r))';
-% 
-% choiceVec = choiceVecSSE;
-% 
-% %8.3 Create predictionVec with best likelihood estimates:
-% predictionVec3(:,:,r) = choiceVec(:,:,r).*predictionVec1(:,:,r) + (1-choiceVec(:,:,r)).*predictionVec2(:,:,r);
-% 
-% %8.4 Create predictionVec by using the third network 
-% % 
-% % xTest2(:,:,r) = horzcat(sseVec1(:,:,r)', sseVec2(:,:,r)', predictionVec1(:,:,r), predictionVec2(:,:,r));
-% % 
-% % predictionVec4(:,:,r) = net3.predict(xTest2(:,:,r));
+predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTestNoNorm(:,:,r), xTest(:,:,r));
 
 end
+toc
+
+%Get predictions for all noise instantiations together (doesn't work yet)
+
+% %First reorganise data
+% xTestPermuted = permute(xTest,[1 3 2]);
+% xTestReshaped = reshape(xTestPermuted,[size(xTest,1)*size(xTest,3),size(xTest,2),1]);
+% 
+% %Get predictions
+% prediction1 =nets.net1.predict(xTestReshaped);
+% prediction2 =nets.net2.predict(xTestReshaped);
+% 
+% %With image-based normalisation for likelihood calc
+% prediction3 = combinePredictions(prediction1, prediction2, settings, xTestReshaped, xTestReshaped);
+% 
+% prediction1 = reshape(prediction1,size(xTest,1),reps,2);
+% prediction1 = permute(prediction1,[1 3 2]);
+% prediction2 = reshape(prediction2,size(xTest,1),reps,2);
+% prediction2 = permute(prediction2,[1 3 2]);
+% prediction3 = reshape(prediction3,size(xTest,1),reps,3);
+% prediction3 = permute(prediction3,[1 3 2]);
+
 
 % %% Loop over 'voxels' / noise instantiations (parfor)
 % parfor r = 1:reps
@@ -141,6 +151,7 @@ end
 
 %% 9. Visualise predicted values vs ground truth (use all data to ease visualisation)
 
+
 %Show summaries for single instantion, mean and SD over instantions
 
 %dispSl specifies the instantiation
@@ -162,36 +173,37 @@ createSDFigDL(std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, std');
 % createFigDL(std(predictionVec4,0,3), yTest,FFvals,R2vals,'Third network, std');
 
 %% Show a histogram of values for chosen ground truth FF value
-gtFF = 0.4;
-gtR2 = 0.2; 
+% gtFF = 0.94;
+% gtR2 = 0.0; 
+% 
+% index = find(yTest(:,1)==gtFF & yTest(:,2)==gtR2);
+% 
+% %Get values for chosen ground truth
+% ffValues = predictionVec3(index,1,:);
+% r2Values = predictionVec3(index,2,:);
+% 
+% %Reshape
+% ffValues = reshape(ffValues,[reps 1]);
+% r2Values = reshape(r2Values,[reps 1]);
+% 
+% %Plot
+% figure
+% s1=scatter(ffValues,r2Values);
+% xticks([0 0.2 0.4 0.6 0.8 1.0]);
+% xticklabels({'0','0.2','0.4', '0.6', '0.8','1.0'});
+% yticks([0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]);
+% yticklabels({'0','100', '200', '300', '400', '500', '600', '700', '800', '900','1000'});
+% % set(s1,'YGrid','on','GridAlpha',0.5)
+% title('FF / R2* scatterplot (Gaussian)')
+% ylabel('R2* (s^-1)','FontSize',12)
+% xlabel('PDFF estimate','FontSize',12)
+% xlim([0 1])
+% ylim([0 1]); %get ylim to enable setting for next plot
+% hold on
+% plot(gtFF,gtR2,'rd','MarkerSize',8,'MarkerFaceColor','red') %..add ground truth as point
+% hold off
+% legend('Estimates','Ground truth')
 
-index = find(yTest(:,1)==gtFF & yTest(:,2)==gtR2);
-
-%Get values for chosen ground truth
-ffValues = predictionVec3(index,1,:);
-r2Values = predictionVec3(index,2,:);
-
-%Reshape
-ffValues = reshape(ffValues,[100 1]);
-r2Values = reshape(r2Values,[100 1]);
-
-%Plot
-figure
-s1=scatter(ffValues,r2Values)
-xticks([0 0.2 0.4 0.6 0.8 1.0]);
-xticklabels({'0','0.2','0.4', '0.6', '0.8','1.0'});
-yticks([0 0.1 0.2 0.3 0.4 0.5 0.6 0.7 0.8 0.9 1.0]);
-yticklabels({'0','100', '200', '300', '400', '500', '600', '700', '800', '900','1000'});
-% set(s1,'YGrid','on','GridAlpha',0.5)
-title('FF / R2* scatterplot (Gaussian)')
-ylabel('R2* (s^-1)','FontSize',12)
-xlabel('PDFF estimate','FontSize',12)
-xlim([0 1])
-ylim([0 1]); %get ylim to enable setting for next plot
-hold on
-plot(gtFF,gtR2,'rd','MarkerSize',8,'MarkerFaceColor','red') %..add ground truth as point
-hold off
-legend('Estimates','Ground truth')
 
 end
 

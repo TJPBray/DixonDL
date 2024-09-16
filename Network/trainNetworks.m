@@ -39,12 +39,12 @@ for k = 1:2
 S0 = 1;
 
 %Specify SNR
-noiseSD = settings.noiseSD;
+noiseSD = settings.sigmaEst;
 
 % 1.2 Specify ff Range
 
     %If using two sets of values, specify switch point
-    switchPoint = 0.63;
+    switchPoint = 0.58;
     ffRanges = [0 switchPoint; switchPoint 1];
 
     %Select range depending on value of k 
@@ -213,7 +213,7 @@ numOfLayers = size(layers, 1);
 %
 
 options = trainingOptions('adam', ...
-    'MaxEpochs',1000, ...
+    'MaxEpochs',100, ...
     'InitialLearnRate',1e-3, ...
     'MiniBatchSize', 32, ...
     'ValidationPatience', 20, ....
