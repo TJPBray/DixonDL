@@ -20,7 +20,7 @@ echotimes=settings.echotimes;
 rng(5)
 
 %Specify dataset size
-sz = 20000;
+sz = 100000;
 
 %Specify curtail factor to restrict R2* values (avoids ambiguity at higher
 %R2* due to increased peak width) 
@@ -36,15 +36,17 @@ for k = 1:2
 % both FF and R2*)
 
 % Specify S0 (au)
-S0 = 1;
+S0 = 50;
 
 %Specify SNR
-noiseSD = settings.sigmaEst;
+% noiseSD = S0/settings.SNR;
 
 % 1.2 Specify ff Range
 
     %If using two sets of values, specify switch point
-    switchPoint = 0.58;
+        switchPoint = 0.58; 
+%       switchPoint = 0.63; 
+    
     ffRanges = [0 switchPoint; switchPoint 1];
 
     %Select range depending on value of k 
@@ -83,14 +85,39 @@ Sreal = real(sNoiseFree);
 Simag = imag(sNoiseFree);
 
 sCompNoiseFree = horzcat(Sreal,Simag);
+
 sMagNoiseFree = abs(sNoiseFree);
 
-%Create noise
-realnoise=(noiseSD)*randn(sz(k),numel(echotimes));
-imagnoise=1i*(noiseSD)*randn(sz(k),numel(echotimes));
+%Create noise (uniform SNR)
+% realnoise=(noiseSD)*randn(sz(k),numel(echotimes));
+% imagnoise=1i*(noiseSD)*randn(sz(k),numel(echotimes));
+
+%Varied SNR
+%Set up matrices to allow graded SNR over the full range
+snrHigh = 120;
+snrLow = 20; 
+snrRange = snrHigh - snrLow;
+snrVec = snrLow + snrRange*rand(sz(k),1);
+noiseSdVec = S0./snrVec; 
+noiseSdMat = repmat(noiseSdVec,1,numel(echotimes));
+
+realnoise=noiseSdMat.*randn(sz(k),numel(echotimes));
+imagnoise=1i*noiseSdMat.*randn(sz(k),numel(echotimes));
+
+noise = realnoise + imagnoise; 
+
+% %Visualise noise
+% figure
+% subplot(1,2,1)
+% scatter(real(noise),imag(noise))
+% title('Complex noise')
+% 
+% subplot(1,2,2)
+% hist(abs(noise(:,1)),20)
+% title('Magnitude of noise')
 
 % Add noise to signal to create noisy signal
-sCompNoisy = sNoiseFree + realnoise + imagnoise; 
+sCompNoisy = sNoiseFree + noise; 
 
 %Get noise magnitude data
 sMagNoisy=abs(sCompNoisy);
@@ -99,7 +126,12 @@ sMagNoisy=abs(sCompNoisy);
 sCompNoisy = horzcat(real(sCompNoisy),imag(sCompNoisy));
 
 %Choose which data to use for training
+if settings.noisyTraining == 0; 
 S = sMagNoiseFree;
+elseif settings.noisyTraining == 1; 
+S = sMagNoisy;    
+else ;
+end
 
 %% Normalise signals 
 
@@ -108,27 +140,6 @@ S = sMagNoiseFree;
 
 %Otherwise, normalise all together 
 S = Snorm;
-
-% if k == 1
-% 
-% % Either divide by estimated S0 or divide all voxels by maximum
-% % [Snorm, s0estimate(k)] = normaliseSignals(S,settings);
-% 
-% waterMax = max(S,[],'all');
-% 
-% Snorm = S / waterMax;
-% 
-% elseif k == 2 
-% 
-% Snorm = S / waterMax;
-% 
-% else ; 
-% end
-
-%NB: Use s0 estimate (i.e. s0estimate(1) from water training for fat
-%training) 
-
-
 
 %% 2.0 Split synthesised data into the training and validation set
 %
@@ -171,17 +182,17 @@ numOfOutput = 2;
 % name of the output
 outputName = 'FF R2*';
 
-% create the layers, including relu layer
 % layers = [
 %     featureInputLayer(numOfFeatures, 'Name', inputName);
 %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+%     eluLayer;
 %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
-%     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
+%     eluLayer;
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc3');
 %     regressionLayer('Name', outputName);
 %     ];
 
+% create the layers, including elu layers
 layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
@@ -213,10 +224,12 @@ numOfLayers = size(layers, 1);
 %
 
 options = trainingOptions('adam', ...
-    'MaxEpochs',100, ...
+    'MaxEpochs',50, ...
+    'ValidationPatience', 50, ....
+    'OutputNetwork','best-validation-loss',...
+    'ValidationData', {xValidation, yValidation},...
     'InitialLearnRate',1e-3, ...
     'MiniBatchSize', 32, ...
-    'ValidationPatience', 20, ....
     'L2Regularization',0,...
     'Verbose',false, ...
     'Plots','training-progress');   %No regularisation as low FF values should not be preferred
@@ -231,10 +244,10 @@ options.ValidationData = {xValidation, yValidation};
 % Name networks according to the loop value (net1 for low FF training, net2
 % for high FF training)
 if k == 1
-    nets.net1 = trainNetwork(xTrain, yTrain, layers, options);
+    [nets.net1,nets.info1] = trainNetwork(xTrain, yTrain, layers, options);
 
 elseif k == 2
-    nets.net2 = trainNetwork(xTrain, yTrain, layers, options);
+    [nets.net2,nets.info2] = trainNetwork(xTrain, yTrain, layers, options);
 
 else ;
 end

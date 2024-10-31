@@ -25,11 +25,16 @@ rawPred1 = pred1;
 rawPred2 = pred2;
 
 % % Eliminate extreme values of parameters before calculating sse / likelihood
-% pred1(pred1>1) = 1; 
-% pred1(pred1<0) = 0;
-% 
-% pred2(pred2>1) = 1; 
-% pred2(pred2<0) = 0;
+if settings.tuning.clipOutputs == 1
+
+pred1(pred1>1) = 1; 
+pred1(pred1<0) = 0;
+
+pred2(pred2>1) = 1; 
+pred2(pred2<0) = 0;
+
+else ; 
+end 
 
 %% Calculate s0 estimates ahead of likelihood calculation
 %Use the fact that S = A*S0 where S0 is a scalar factor and A is the

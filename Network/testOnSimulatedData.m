@@ -32,12 +32,13 @@ yTest = paramVec;
 
 
 %If noise free simulation, set noiseSD = 0
-if settings.noiseFree == 1
+if settings.noisyTesting == 0
 
     settings.sigmaEst = 0
-else 
+elseif settings.noisyTesting == 1
 % Otherwise, estimate noiseSD using test voxels
     settings.sigmaEst = estimateSigmaForSimulation(S0, settings, 100);
+else ; 
 end
 
 
@@ -51,7 +52,11 @@ realnoise=(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
 imagnoise=1i*(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
 
 %Add noise to signal 
+if settings.noisyTesting == 0
+sVec = sVecNoiseFree;
+elseif settings.noisyTesting == 1
 sVec = sVecNoiseFree + realnoise + imagnoise;
+end
 
 %Magnitude
 sVec = abs(sVec);
@@ -85,13 +90,13 @@ choiceVec = choiceVecSSE;
 
 %% Loop over 'voxels' / noise instantiations (conventional for loop)
 tic
-parfor r = 1:reps
+for r = 1:reps
 
 %Get net1 predictions
-predictionVec1(:,:,r)=nets.net1.predict(xTest(:,:,r));
+predictionVec1(:,:,r)= nets.net1.predict(xTest(:,:,r));
 
 %Get net2 predictions
-predictionVec2(:,:,r)=nets.net2.predict(xTest(:,:,r));
+predictionVec2(:,:,r)= nets.net2.predict(xTest(:,:,r));
 
 %Combine predictions 
 predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTestNoNorm(:,:,r), xTest(:,:,r));
@@ -157,19 +162,19 @@ toc
 %dispSl specifies the instantiation
 dispSl = 1;
 
-createFigDL(predictionVec1(:,:,dispSl), yTest,FFvals,R2vals, 'Low FF net, mean values');
-createFigDL(predictionVec2(:,:,dispSl), yTest,FFvals,R2vals, 'High FF net, mean values');
-createFigDL(predictionVec3(:,:,dispSl), yTest,FFvals,R2vals,'Likelihood combined nets, mean values');
+createFigDL(predictionVec1(:,:,dispSl), std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, mean values');
+createFigDL(predictionVec2(:,:,dispSl), std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, mean values');
+createFigDL(predictionVec3(:,:,dispSl), std(predictionVec1,0,3), yTest,FFvals,R2vals,'Likelihood combined nets, mean values');
 % createFigDL(predictionVec4(:,:,dispSl), yTest,FFvals,R2vals,'Third network, mean values');
 
-createFigDL(mean(predictionVec1,3), yTest,FFvals,R2vals, 'Low FF net, mean values');
-createFigDL(mean(predictionVec2,3), yTest,FFvals,R2vals, 'High FF net, mean values');
-[dlMaps,dlErrormaps] = createFigDL(mean(predictionVec3,3), yTest,FFvals,R2vals,'Likelihood combined nets, mean values');
+createFigDL(mean(predictionVec1,3), std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, mean values');
+createFigDL(mean(predictionVec2,3), std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, mean values');
+[dlMaps,dlErrormaps,sdMaps] = createFigDL(mean(predictionVec3,3), std(predictionVec3,0,3), yTest,FFvals,R2vals,'Likelihood combined nets, mean values');
 % createFigDL(mean(predictionVec4,3), yTest,FFvals,R2vals,'Third network, mean values');
 
-createSDFigDL(std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, std');
-createSDFigDL(std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, std');
-[sdMaps] = createSDFigDL(std(predictionVec3,0,3), yTest,FFvals,R2vals,'Likelihood combined nets, std');
+% createSDFigDL(std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, std');
+% createSDFigDL(std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, std');
+% [sdMaps] = createSDFigDL(std(predictionVec3,0,3), yTest,FFvals,R2vals,'Likelihood combined nets, std');
 % createFigDL(std(predictionVec4,0,3), yTest,FFvals,R2vals,'Third network, std');
 
 %% Show a histogram of values for chosen ground truth FF value

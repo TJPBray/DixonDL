@@ -5,114 +5,116 @@
 %% 1. Simulations
 
 % Specify settings
-settings.echotimes = [1.1:1.1:13.2]';
-% settings.echotimes = [1.15,2.3,3.45,4.6,5.75,6.9]';
-
-% settings.echotimes = [0:0.05:10]';
+% settings.echotimes = [1.1:1.1:13.2]';
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando data/site1_begin_3T_protocol1.mat')
+settings.echotimes = (1000*imDataAll.TE);
 
 settings.fieldStrength = 3;
 
-%For noise-free simulations, set settings.noiseSD = 0; 
-% settings.noiseSD = 0;
+%Specify tuning parameters for inference (choice of network output)
+settings.tuning.useImplausibleValues = 0;
+settings.tuning.clipOutputs = 0;
 
 %% 1.1 First single network only 
 % Note: trainSignleNetworks actually returns two networks but one is a duplicate of the first - simplifies code by avoiding need for separate single-network script) 
 
-%First do this in the absence of noise
-settings.SNR = inf;
-settings.noiseFree = 1;
-
-%Train single network with uniform training distribution
+%Train in the absence of noise
+settings.noisyTraining = 0; 
 net = trainSingleNetwork(settings);
+trainingCurves(net)
 
-%Specify tuning parameters for inference (choice of network output)
-settings.tuning.useImplausibleValues = 0;
+%Train in the presence of noise
+settings.noisyTraining = 1; 
+net = trainSingleNetwork(settings);
+trainingCurves(net)
 
 %Test on simulation data (noise-free)
-[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
+% settings.SNR = inf;
+% settings.noisyTesting = 0;
+% [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
 
 %Test on simulation data (with noise)
 settings.SNR = 60;
-settings.noiseFree = 0;
+settings.noisyTesting = 1;
 [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
 
 %Show comparison vs conventional fitting
-
 %Load conventional fitting data for comparison
 load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
 
 %Visualise comparison against conventional fitting
-createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps, dlSDMaps, sdmaps)
+createFigDLvsConventionalFitting(FFmaps, R2maps, dlMaps, errormaps, dlErrormaps, dlSDMaps, sdmaps)
 
 %% 1.2 Dual networks 
 
-%First do this in the absence of noise
-settings.SNR = inf;
-settings.noiseFree = 1;
-
-%Train networks with settings (echotimes, fieldstrength) for chosen dataset
+%Train in the absence of noise
+settings.noisyTraining = 0; 
 nets = trainNetworks(settings);
+trainingCurves(nets)
 
-%Specify tuning parameters for inference (choice of network output)
-settings.tuning.useImplausibleValues = 0;
+%Train in the presence of noise
+settings.noisyTraining = 1; 
+nets = trainNetworks(settings);
+trainingCurves(nets)
 
 %Test on simulation data (noise-free)
-[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+% settings.SNR = inf;
+% settings.noisyTesting = 0;
+% [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
 
 %Test on simulation data (with noise)
 settings.SNR = 60;
-settings.noiseFree = 0;
+settings.noisyTesting = 1;
 [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
 
 %Show comparison vs conventional fitting
 %Load conventional fitting data for comparison
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain_6echoes.mat')
 
 %Visualise comparison against conventional fitting
 createFigDLvsConventionalFitting(FFmaps, R2maps, dlMaps, errormaps, dlErrormaps, dlSDMaps,sdmaps)
 
-
-%% 1.2 Dual networks, investigation of normalisation  
-
-%Specify inaccurate normalisation (normInaccuracy is multipled by the estimated S0 prior to normalisation: 0.9 means S0 estimate is too low , 1.1
-%means S0 estimate is too high) 
-settings.normInaccuracyConstant = 1.1;
-
-%Test on simulation data (noise-free)
-[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
-
-%Test on simulation data (with noise)
-settings.SNR = 60;
-settings.noiseSD = 1/settings.SNR;
-
-[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
-
-%Show comparison vs conventional fitting
-%Load conventional fitting data for comparison
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
-
-%Visualise comparison against conventional fitting
-createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps, dlSDMaps,sdmaps)
-
+% %% 1.2 Dual networks, investigation of normalisation  
+% 
+% %Specify inaccurate normalisation (normInaccuracy is multipled by the estimated S0 prior to normalisation: 0.9 means S0 estimate is too low , 1.1
+% %means S0 estimate is too high) 
+% settings.normInaccuracyConstant = 1.1;
+% 
+% %Test on simulation data (noise-free)
+% [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+% 
+% %Test on simulation data (with noise)
+% settings.SNR = 60;
+% settings.noiseSD = 1/settings.SNR;
+% 
+% [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+% 
+% %Show comparison vs conventional fitting
+% %Load conventional fitting data for comparison
+% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/MAGORINO_Simulation_Results_SNR60_R100_fineGrain.mat')
+% 
+% %Visualise comparison against conventional fitting
+% createFigDLvsConventionalFitting(FFmaps, dlMaps, errormaps, dlErrormaps, dlSDMaps,sdmaps)
 
 
-%% 1.3 Test accuracy of normalisation
 
-% Load chosen dataset to get settings for that dataset
-load('site1_begin_3T_protocol2.mat')
-
-% Get settings
-settings.echotimes = 1000*imDataAll.TE;
-settings.fieldStrength = imDataAll.FieldStrength;
-
-% Provide guess for SNR and noiseSD
-SNRguess = 50;
-% settings.SNR = SNRguess;
-% settings.noiseSD = 1/SNRguess;
-settings.noiseSD = 0;
-
-%Test normalisation
-testNormalisation(settings)
+% %% 1.3 Test accuracy of normalisation
+% 
+% % Load chosen dataset to get settings for that dataset
+% load('site1_begin_3T_protocol2.mat')
+% 
+% % Get settings
+% settings.echotimes = 1000*imDataAll.TE;
+% settings.fieldStrength = imDataAll.FieldStrength;
+% 
+% % Provide guess for SNR and noiseSD
+% SNRguess = 50;
+% % settings.SNR = SNRguess;
+% % settings.noiseSD = 1/SNRguess;
+% settings.noiseSD = 0;
+% 
+% %Test normalisation
+% testNormalisation(settings)
 
 
 %% 2. Train and implement network with echotimes corresponding to specific SUBJECT dataset
@@ -129,9 +131,9 @@ load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData.
 load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData_sigmaRoi.mat')
 slice = 20; sigmaEst = 5.3559;
 
-% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen.mat'); 
-% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen_sigmaRoi.mat')
-% slice = 40; sigmaEst = 3.4585; 
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen.mat'); 
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen_sigmaRoi.mat')
+slice = 40; sigmaEst = 3.4585; 
 % 
 load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriThorax.mat'); 
 load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriThorax_sigmaRoi.mat')
@@ -164,13 +166,16 @@ settings.sigmaEst = sigmaEst;
 
 %2.4 Train networks with settings (echotimes, fieldstrength) for chosen
 %dataset
+settings.noisyTraining = 1; 
 nets = trainNetworks(settings);
+
 
 %Specify tuning parameters for inference (choice of network output)
 settings.tuning.useImplausibleValues = 1;
+settings.tuning.clipOutputs = 0;
 
 %2.5 Check network performance on simulation data
-testOnSimulatedData(nets,settings)
+% testOnSimulatedData(nets,settings)
 
 %2.6 Use networks to get predicts for the chosen dataset
 
@@ -272,78 +277,35 @@ colorbar
 
 [FFmaps,errormaps,sdmaps,residuals] = Simulate_Values(50, 0, 20)
 
-% 2.8 Display comparison with conventional fitting
-
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/FW101_results_sigmaFromFit.mat')
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/Rev2_LegsSwapData_results.mat')
-
-imDataAll = imDataParams;
-
-%Mask out background 
-mask = zeros (size(imDataAll.images(:,:,slice,1,1)));
-thresh = prctile(abs(imDataAll.images(:,:,:,1,1)),85,'all');
-mask(abs(imDataAll.images(:,:,slice,1,1))>thresh) = 1;
-mask = imfill(mask,"holes");
-figure, imshow(mask)
-
-yDisp = (70:170);
-
-
-
-
-
-
-% % Interrogate chosen ROI for differences between 
-% 
-% figure 
-% imshow(1000*r2Map,[0 200])
-% title('R2* - Likelihood-chosen output')
-% colorbar
-% 
-% figure 
-% imshow(1000*maps.R2standard,[0 200])
-% title('R2* - Likelihood-chosen output')
-% colorbar
-% 
-% roi=drawellipse;
-% bw = createMask(roi);
-% pixvals_dl = r2Map(bw==1);
-% meanr2_dl = mean(pixvals_dl*1000)
-% stdr2_dl = std(pixvals_dl*1000)
-% 
-% pixvals = maps.R2standard(bw==1);
-% meanr2 = mean(pixvals*1000)
-% stdr2 = std(pixvals*1000)
 
 
 %% Display comparison with conventional fitting
 
-%Load maps from conventional imaging data
-% load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/FW101_results_sigmaFromFit.mat')
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/Rev2_LegsSwapData_results.mat')
+% 2.8 Display comparison with conventional fitting
+
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/FW101_results_sigmaFromFit.mat') 
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/Rev2_LegsSwapData_results.mat'); prc = 86; yDisp = (70:170);
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/wbmri_thorax.mat'); prc = 68; yDisp = (1:192);
 
 imDataAll = imDataParams;
 
 %Mask out background to avoid unwanted 'noise' in plots
 mask = zeros (size(imDataAll.images(:,:,slice,1,1)));
-thresh = prctile(abs(imDataAll.images(:,:,:,1,1)),85,'all');
+thresh = prctile(abs(imDataAll.images(:,:,:,1,1)),prc,'all');
 mask(abs(imDataAll.images(:,:,slice,1,1))>thresh) = 1;
 mask = imfill(mask,"holes");
 figure, imshow(mask)
 
-%Crop out unnecessary parts of the image
-yDisp = (70:170);
-
 %Show images comparing the two 
 figure
-subplot(4,2,1)
-imshow(maps.FFstandard(yDisp,:).*mask(yDisp,:),[0 1],'InitialMagnification', 400)
+subplot(3,2,1)
+imshow(maps.FFrician(yDisp,:).*mask(yDisp,:),[0 1],'InitialMagnification', 400)
 title('PDFF - Conventional fitting')
 h=colorbar
 h.Label.String = "PDFF";
 h.FontSize=12; 
 
-subplot(4,2,3)
+subplot(3,2,3)
 imshow(ffMap(yDisp,:).*mask(yDisp,:),[0 1])
 colormap('parula')
 title('PDFF - DL')
@@ -351,42 +313,42 @@ h=colorbar
 h.Label.String = "PDFF";
 h.FontSize=12; 
 
-subplot(4,2,5)
-imshow(ffMap(yDisp,:).*mask(yDisp,:) - maps.FFrician(yDisp,:).*mask(yDisp,:),[-1 1])
+subplot(3,2,5)
+imshow(ffMap(yDisp,:).*mask(yDisp,:) - maps.FFrician(yDisp,:).*mask(yDisp,:),[-0.2 0.2])
 title('PDFF difference (DL - conventional)')
 h=colorbar
 h.Label.String = "PDFF difference";
 h.FontSize=12; 
 
-subplot(4,2,7)
-scatter(reshape(maps.FFrician.*mask,1,[]),reshape(ffMap.*mask,1,[]),'filled','MarkerFaceAlpha',0.1)
-title('PDFF difference (DL - conventional)')
-xlim([0 1])
-ylim([0 1])
-xlabel('MAGORINO FF')
-ylabel('RAIDER FF')
+% subplot(3,2,7)
+% scatter(reshape(maps.FFrician.*mask,1,[]),reshape(ffMap.*mask,1,[]),'filled','MarkerFaceAlpha',0.1)
+% title('PDFF difference (DL - conventional)')
+% xlim([0 1])
+% ylim([0 1])
+% xlabel('MAGORINO FF')
+% ylabel('RAIDER FF')
 
-% % Do the same for R2* 
-% subplot(4,2,2)
-% imshow(1000*maps.R2standard(yDisp,:).*mask(yDisp,:),[0 500])
-% title('R2* - Conventional fitting')
-% h=colorbar
-% h.Label.String = "R2* (s^-^1)";
-% h.FontSize=12; 
-% 
-% subplot(4,2,4)
-% imshow(1000*r2Map(yDisp,:).*mask(yDisp,:),[0 500])
-% title('R2* - DL')
-% h=colorbar
-% h.Label.String = "R2* (s^-^1)";
-% h.FontSize=12; 
-% 
-% subplot(4,2,6)
-% imshow(1000*r2Map(yDisp,:).*mask(yDisp,:) - 1000*maps.R2rician(yDisp,:).*mask(yDisp,:),[-500 500])
-% title('R2* difference (DL - conventional)')
-% h=colorbar
-% h.Label.String = "R2* difference (s^-^1)";
-% h.FontSize=12; 
+% Do the same for R2* 
+subplot(3,2,2)
+imshow(1000*maps.R2rician(yDisp,:).*mask(yDisp,:),[0 500])
+title('R2* - Conventional fitting')
+h=colorbar
+h.Label.String = "R2* (s^-^1)";
+h.FontSize=12; 
+
+subplot(3,2,4)
+imshow(1000*r2Map(yDisp,:).*mask(yDisp,:),[0 500])
+title('R2* - DL')
+h=colorbar
+h.Label.String = "R2* (s^-^1)";
+h.FontSize=12; 
+
+subplot(3,2,6)
+imshow(1000*r2Map(yDisp,:).*mask(yDisp,:) - 1000*maps.R2rician(yDisp,:).*mask(yDisp,:),[-100 100])
+title('R2* difference (DL - conventional)')
+h=colorbar
+h.Label.String = "R2* difference (s^-^1)";
+h.FontSize=12; 
 
 % Extract values for scatterplots
 ffVals = reshape(ffMap(mask==1),1,[]);
@@ -518,6 +480,8 @@ roiFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando ROIs';
 %Folder for saving
 saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomNetworks';
 
+load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/sigmaEstimates.mat')
+
 %3.2 Get image and ROI folder info
 imageFolderInfo=dir(imageFolder);
 roiFolderInfo=dir(roiFolder);
@@ -585,22 +549,12 @@ settings.fieldStrength = imData.FieldStrength;
 %Specify echotimes shape to ensure consistently correct
 settings.echotimes = reshape(settings.echotimes,[6 1]);
 
-% %3.10 Provide guess for SNR and noiseSD
-% if round(settings.fieldStrength) == 3 %If field strength is 3
-%     SNRguess = 50;
-% 
-% elseif round(2*settings.fieldStrength) == 3 %If field strength is 1.5
-%     SNRguess = 30;
-% else ;
-% end
-% 
-% settings.noiseSD = 1/SNRguess;
-
-%Specify tuning parameters for inference (choice of network output)
-settings.tuning.useImplausibleValues = 1;
+%Use existing sigma estimates
+settings.sigmaEst = sigmaEstimates(n);
 
 %3.11 Train networks with settings (echotimes, fieldstrength) for chosen
 %dataset
+settings.noisyTraining = 1; 
 nets = trainNetworks(settings);
 
 %3.12 Check performance on simulation data
@@ -614,19 +568,18 @@ end
 
 % %3.17 Save variables (mapsWithSigma,filteredSigma,maps)
 saveFileName = strcat('MAPS_', dataFileName);
-save(fullfile(saveFolder,saveFileName), nets');
-
+save(fullfile(saveFolder,saveFileName), 'nets');
 end
 
 
 %% 3B. IMPLEMENT networks with echotimes corresponding to PHANTOM datasets
-
 %3.1 Define folders for import of multiecho data and ROIs
 imageFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando data';
 roiFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Hernando ROIs';
 
 %Network folder for loading from
 loadFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomNetworks';
+% loadFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomNetworks';
 
 %Folder for saving results to
 saveFolder='/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Results/HernandoPhantomResults';
@@ -721,6 +674,7 @@ load(fullfile(loadFolder,loadFileName));
 
 %Specify tuning parameters for inference (choice of network output)
 settings.tuning.useImplausibleValues = 1;
+settings.tuning.clipOutputs = 1; 
 
 %3.12 Check performance on simulation data
 % testOnSimulatedData(nets,settings)

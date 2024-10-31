@@ -20,7 +20,7 @@ echotimes=settings.echotimes;
 rng(5)
 
 %Specify dataset size
-sz = 20000;
+sz = 100000;
 
 %Specify curtail factor to restrict R2* values (avoids ambiguity at higher
 %R2* due to increased peak width) 
@@ -30,10 +30,10 @@ curtail = 1; %1 = no restriction of training range
 % both FF and R2*)
 
 % Specify S0 (au)
-S0 = 1;
+S0 = 50;
 
 %Specify SNR
-noiseSD = settings.noiseSD;
+% noiseSD = S0/settings.SNR;
 
 % 1.2 Specify ff Range
 
@@ -70,21 +70,33 @@ Simag = imag(sNoiseFree);
 sCompNoiseFree = horzcat(Sreal,Simag);
 sMagNoiseFree = abs(sNoiseFree);
 
-%Create noise
-realnoise=(noiseSD)*randn(sz(1),numel(echotimes));
-imagnoise=(noiseSD)*randn(sz(1),numel(echotimes));
+%Create noise (uniform SNR)
+% realnoise=(noiseSD)*randn(sz(k),numel(echotimes));
+% imagnoise=1i*(noiseSD)*randn(sz(k),numel(echotimes));
 
-noise = realnoise + 1i*imagnoise;
+%Varied SNR
+%Set up matrices to allow graded SNR over the full range
+snrHigh = 120;
+snrLow = 20; 
+snrRange = snrHigh - snrLow;
+snrVec = snrLow + snrRange*rand(sz,1);
+noiseSdVec = S0./snrVec; 
+noiseSdMat = repmat(noiseSdVec,1,numel(echotimes));
 
-% %Visualise noise
-% figure
-% subplot(1,2,1)
-% scatter(real(noise),imag(noise))
-% title('Complex noise')
-% 
-% subplot(1,2,2)
-% hist(abs(noise(:,1)),20)
-% title('Magnitude of noise')
+realnoise=noiseSdMat.*randn(sz,numel(echotimes));
+imagnoise=1i*noiseSdMat.*randn(sz,numel(echotimes));
+
+noise = realnoise + imagnoise; 
+
+%Visualise noise
+figure
+subplot(1,2,1)
+scatter(real(noise),imag(noise))
+title('Complex noise')
+
+subplot(1,2,2)
+hist(abs(noise(:,1)),20)
+title('Magnitude of noise')
 
 % Add noise to signal to create noisy signal
 sCompNoisy = sNoiseFree + noise; 
@@ -96,7 +108,12 @@ sMagNoisy=abs(sCompNoisy);
 sCompNoisy = horzcat(real(sCompNoisy),imag(sCompNoisy));
 
 %Choose which data to use for training
+if settings.noisyTraining == 0; 
 S = sMagNoiseFree;
+elseif settings.noisyTraining == 1; 
+S = sMagNoisy;    
+else ;
+end
 
 %% Normalise signals (divide by estimated S0)
 
@@ -147,29 +164,70 @@ numOfOutput = 2;
 % name of the output
 outputName = 'FF R2*';
 
-% create the layers, including relu layer
+% create the layers, including elu layers (consider 9 layers as per Gyori to
+% optimise fitting as far as possible)
+
 % layers = [
 %     featureInputLayer(numOfFeatures, 'Name', inputName);
 %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+%     eluLayer;
 %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+%     eluLayer;
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc3');
+%     regressionLayer('Name', outputName);
+%     ];
+% 
+% layers = [
+%     featureInputLayer(numOfFeatures, 'Name', inputName);
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+%     eluLayer;
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+%     eluLayer;
 %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+%     eluLayer;
 %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+%     eluLayer;
 %     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
 %     regressionLayer('Name', outputName);
 %     ];
 
-% Create the layers, including elu layer
+% layers = [
+%     featureInputLayer(numOfFeatures, 'Name', inputName);
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+%     eluLayer;
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+%     eluLayer;
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+%     eluLayer;
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+%     eluLayer;
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc5');
+%     eluLayer;
+%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc6');
+%     eluLayer;
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc7');
+%     regressionLayer('Name', outputName);
+%     ];
+
 layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
-    fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc1');
     eluLayer;
-    fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc2');
     eluLayer;
-    fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc3');
     eluLayer;
-    fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc4');
     eluLayer;
-    fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc5');
+    eluLayer;
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc6');
+    eluLayer;
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc7');
+    eluLayer;
+    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc8');
+    eluLayer;
+    fullyConnectedLayer(numOfOutput, 'Name', 'fc9');
     regressionLayer('Name', outputName);
     ];
 
@@ -189,21 +247,21 @@ numOfLayers = size(layers, 1);
 % samples that do not completely fill up a mini-batch.
 %
 options = trainingOptions('adam', ...
-    'MaxEpochs',1000, ...
+    'MaxEpochs',50, ...
+    'ValidationPatience', 50, ....
+    'OutputNetwork','best-validation-loss',...
+    'ValidationData', {xValidation, yValidation},...
     'InitialLearnRate',1e-3, ...
     'MiniBatchSize', 32, ...
-    'ValidationPatience', 20, ....
-    'L2Regularization',0,...
+    'L2Regularization',0,... %No regularisation as low FF values should not be preferred
     'Verbose',false, ...
-    'Plots','training-progress'); %No regularisation as low FF values should not be preferred
-
-% include the validation data
-options.ValidationData = {xValidation, yValidation};
+    'Plots','training-progress'); 
+   
 
 %% 5.0 Training
 
 % Run the training
-    nets.net1 = trainNetwork(xTrain, yTrain, layers, options);
+    [nets.net1,nets.info1] = trainNetwork(xTrain, yTrain, layers, options);
     
 % Export duplicate of first network (simplifies code as avoids need to create a separate script for only one network)         
     nets.net2 = nets.net1; 
