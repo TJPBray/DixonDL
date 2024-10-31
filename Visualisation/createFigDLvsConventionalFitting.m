@@ -24,7 +24,7 @@ ax=gca;
 ax.CLim=[0 1];
 FigLabels;
 title('Gaussian FF')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
 
@@ -34,7 +34,7 @@ ax=gca;
 ax.CLim=[0 1];
 FigLabels;
 title('Rician FF')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
 
@@ -44,67 +44,67 @@ ax=gca;
 ax.CLim=[0 1];
 FigLabels;
 title('DL FF')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
 
 subplot(3,3,4)
 image(errormaps.FFstandard,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[-1 1];
+ax.CLim=[-.2 .2];
 FigLabels;
 title('Gaussian FF error')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
 
 subplot(3,3,5)
 image(errormaps.FFRician,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[-1 1];
+ax.CLim=[-.2 .2];
 FigLabels;
 title('Rician FF error')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
 
 subplot(3,3,6)
 image(dlErrormaps.ff,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[-1 1];
+ax.CLim=[-.2 .2];
 FigLabels;
 title(['DL FF error'])
-h=colorbar
+h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
 
 subplot(3,3,7)
 image(sdMaps.FFstandard,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 1];
+ax.CLim=[0 .3];
 FigLabels;
 title('Gaussian FF SD')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF SD";
 h.Label.FontSize = 12;
 
 subplot(3,3,8)
 image(sdMaps.FFRician,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 1];
+ax.CLim=[0 .3];
 FigLabels;
 title('Rician FF SD')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF SD";
 h.Label.FontSize = 12;
 
 subplot(3,3,9)
 image(dlSdMaps.ff,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 1];
+ax.CLim=[0 .3];
 FigLabels;
 title('DL FF SD')
-h=colorbar
+h=colorbar;
 h.Label.String = "FF SD";
 h.Label.FontSize = 12;
 
@@ -118,12 +118,12 @@ sum(abs(dlErrormaps.ff),'all')
 figure('Name', 'Parameter error for R_2^*: DL vs conventional fitting')
 
 subplot(3,3,1)
-image(1000*R2maps.standard,'CDataMapping','scaled')
+image(1000*R2maps.Rician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 500];
 FigLabels;
 title('Gaussian R_2^*')
-h=colorbar
+h=colorbar;
 h.Label.String = "R_2^* (s^-^1)";
 h.Label.FontSize = 12;
 
@@ -133,7 +133,7 @@ ax=gca;
 ax.CLim=[0 500];
 FigLabels;
 title('Rician R_2^*')
-h=colorbar
+h=colorbar;
 h.Label.String = "R_2^* (s^-^1)";
 h.Label.FontSize = 12;
 
@@ -143,7 +143,7 @@ ax=gca;
 ax.CLim=[0 500];
 FigLabels;
 title('DL R_2^*')
-h=colorbar
+h=colorbar;
 h.Label.String = "R_2^* (s^-^1)";
 h.Label.FontSize = 12;
 
@@ -153,7 +153,7 @@ ax=gca;
 ax.CLim=[-100 100];
 FigLabels;
 title('Gaussian R_2^* error')
-h=colorbar
+h=colorbar;
 h.Label.String = "R_2^* error (s^-^1)";
 h.Label.FontSize = 12;
 
@@ -163,7 +163,7 @@ ax=gca;
 ax.CLim=[-100 100];
 FigLabels;
 title('Rician R_2^* error')
-h=colorbar
+h=colorbar;
 h.Label.String = "R_2^* error (s^-^1)";
 h.Label.FontSize = 12;
 
@@ -173,7 +173,7 @@ ax=gca;
 ax.CLim=[-100 100];
 FigLabels;
 title(['DL R_2^* error'])
-h=colorbar
+h=colorbar;
 h.Label.String = "R_2^* error (s^-^1)";
 h.Label.FontSize = 12;
 
@@ -181,37 +181,37 @@ h.Label.FontSize = 12;
 subplot(3,3,7)
 image(1000*sdMaps.R2standard,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 200];
+ax.CLim=[0 100];
 FigLabels;
 title('Gaussian R_2^* SD')
-h=colorbar
+h=colorbar;
 h.Label.String = "R2* SD (s^-^1)";
 h.Label.FontSize = 12;
 
 subplot(3,3,8)
 image(1000*sdMaps.R2Rician,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 200];
+ax.CLim=[0 100];
 FigLabels;
 title('Rician R_2^* SD')
-h=colorbar
+h=colorbar;
 h.Label.String = "R2* SD (s^-^1)";
 h.Label.FontSize = 12;
 
 subplot(3,3,9)
 image(1000*dlSdMaps.r2,'CDataMapping','scaled')
 ax=gca;
-ax.CLim=[0 200];
+ax.CLim=[0 100];
 FigLabels;
 title('DL R_2^* SD')
-h=colorbar
+h=colorbar;
 h.Label.String = "R2* SD (s^-^1)";
 h.Label.FontSize = 12;
 
 %1.5 Print mean absolute error
-sum(abs(sdMaps.FFstandard),'all')
-sum(abs(dlSdMaps.ff),'all')
-sum(abs(sdMaps.R2standard),'all')
-sum(abs(dlSdMaps.r2),'all')
+% sum(abs(sdMaps.FFstandard),'all')
+% sum(abs(dlSdMaps.ff),'all')
+% sum(abs(sdMaps.R2standard),'all')
+% sum(abs(dlSdMaps.r2),'all')
 
 
