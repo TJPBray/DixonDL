@@ -23,17 +23,17 @@ R2vals = (0:0.05*r2max:r2max);
 %Create yTest parameter vector
 yTest = paramVec;
 
-%Loop over noise instantiations 
+%Loop over noise instantiations
 
 % reps = 100;
-% 
+%
 % for r = 1:reps
 
 %Create noise
 realnoise=(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
 imagnoise=1i*(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
 
-%Add noise to signal 
+%Add noise to signal
 sVec = sVecNoiseFree + realnoise + imagnoise;
 
 %Magnitude
@@ -65,7 +65,7 @@ h.Label.FontSize = 12;
 view(0,90)
 
 %% Plot signals for chosen FF, R2*
-ffDisp = 0.1; 
+ffDisp = 0.1;
 r2Disp = 0.2;
 
 ind = find(paramVec(:,1)==ffDisp & paramVec(:,2)==r2Disp);

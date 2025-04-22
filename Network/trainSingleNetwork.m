@@ -10,11 +10,11 @@ function nets = trainSingleNetwork(settings)
 %nets is a structure containing two neural networks ('fat net' and 'water net')
 
 %% 0.0 Specify field strength and echotimes
-%Specify field strength 
+%Specify field strength
 tesla = settings.fieldStrength;
 echotimes=settings.echotimes;
 
-%% 1.0 Synthesise training/validation data using multipeak fat model 
+%% 1.0 Synthesise training/validation data using multipeak fat model
 
 %Specify random seed
 rng(5)
@@ -23,7 +23,7 @@ rng(5)
 sz = 100000;
 
 %Specify curtail factor to restrict R2* values (avoids ambiguity at higher
-%R2* due to increased peak width) 
+%R2* due to increased peak width)
 curtail = 1; %1 = no restriction of training range
 
 % 1.1 First try uniformly spaced samples over the parameter space (vary
@@ -37,18 +37,18 @@ S0 = 50;
 
 % 1.2 Specify ff Range
 
-    %Select range depending on value of k 
-    ffRange = [0 1];
-    
-    %Create vector of ff values
-    FFvec=ffRange(1) + (ffRange(2)-ffRange(1))*rand(sz,1);
+%Select range depending on value of k
+ffRange = [0 1];
+
+%Create vector of ff values
+FFvec=ffRange(1) + (ffRange(2)-ffRange(1))*rand(sz,1);
 
 % 1.3 Specify R2* range
-    r2max=0.5;
-    r2Range = [0 r2max]; %Restrict high FF R2* values to plausible range
+r2max=0.5;
+r2Range = [0 r2max]; %Restrict high FF R2* values to plausible range
 
-    %Create vector of R2* values
-    R2starvec=r2Range(2)*rand(sz(1),1);
+%Create vector of R2* values
+R2starvec=r2Range(2)*rand(sz(1),1);
 
 %Specify F, W and R2* values
 Fvec=S0*FFvec;
@@ -77,16 +77,16 @@ sMagNoiseFree = abs(sNoiseFree);
 %Varied SNR
 %Set up matrices to allow graded SNR over the full range
 snrHigh = 120;
-snrLow = 20; 
+snrLow = 20;
 snrRange = snrHigh - snrLow;
 snrVec = snrLow + snrRange*rand(sz,1);
-noiseSdVec = S0./snrVec; 
+noiseSdVec = S0./snrVec;
 noiseSdMat = repmat(noiseSdVec,1,numel(echotimes));
 
 realnoise=noiseSdMat.*randn(sz,numel(echotimes));
 imagnoise=1i*noiseSdMat.*randn(sz,numel(echotimes));
 
-noise = realnoise + imagnoise; 
+noise = realnoise + imagnoise;
 
 %Visualise noise
 figure
@@ -99,7 +99,7 @@ hist(abs(noise(:,1)),20)
 title('Magnitude of noise')
 
 % Add noise to signal to create noisy signal
-sCompNoisy = sNoiseFree + noise; 
+sCompNoisy = sNoiseFree + noise;
 
 %Get noise magnitude data
 sMagNoisy=abs(sCompNoisy);
@@ -108,10 +108,10 @@ sMagNoisy=abs(sCompNoisy);
 sCompNoisy = horzcat(real(sCompNoisy),imag(sCompNoisy));
 
 %Choose which data to use for training
-if settings.noisyTraining == 0; 
-S = sMagNoiseFree;
-elseif settings.noisyTraining == 1; 
-S = sMagNoisy;    
+if settings.noisyTraining == 0;
+    S = sMagNoiseFree;
+elseif settings.noisyTraining == 1;
+    S = sMagNoisy;
 else ;
 end
 
@@ -148,7 +148,7 @@ yTrain = trainingParams(idxTrain,:);
 xValidation = S(idxValidation,:);
 yValidation = trainingParams(idxValidation,:);
 
-% create a separate test set with values on a grid 
+% create a separate test set with values on a grid
 
 %% 3.0 Build a DNN
 
@@ -176,7 +176,7 @@ outputName = 'FF R2*';
 %     fullyConnectedLayer(numOfOutput, 'Name', 'fc3');
 %     regressionLayer('Name', outputName);
 %     ];
-% 
+%
 layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
@@ -285,16 +285,16 @@ options = trainingOptions('adam', ...
     'MiniBatchSize', 32, ...
     'L2Regularization',0,... %No regularisation as low FF values should not be preferred
     'Verbose',false, ...
-    'Plots','training-progress'); 
-       
+    'Plots','training-progress');
+
 %     'ValidationPatience', 50, ....
 
 %% 5.0 Training
 
 % Run the training
-    [nets.net1,nets.info1] = trainNetwork(xTrain, yTrain, layers, options);
-    
-% Export duplicate of first network (simplifies code as avoids need to create a separate script for only one network)         
-    nets.net2 = nets.net1; 
+[nets.net1,nets.info1] = trainNetwork(xTrain, yTrain, layers, options);
+
+% Export duplicate of first network (simplifies code as avoids need to create a separate script for only one network)
+nets.net2 = nets.net1;
 
 end

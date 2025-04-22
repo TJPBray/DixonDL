@@ -28,11 +28,11 @@ GT.S = Snoisefree;
 
 parfor n=1:reps
 
-%Create noise
-noise=trueNoiseSD*randn(1,numel(echotimes));
+    %Create noise
+    noise=trueNoiseSD*randn(1,numel(echotimes));
 
-%Add noise
-Snoisy(n,:)=Snoisefree+noise;
+    %Add noise
+    Snoisy(n,:)=Snoisefree+noise;
 
 end
 

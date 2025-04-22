@@ -40,10 +40,10 @@ paramVec = horzcat(FFvec,R2vec);
 Fvec = FFvec * S0;
 Wvec = S0 - Fvec;
 
-%1.4 Set other parameters 
-    
+%1.4 Set other parameters
+
 %Define fB
-    fB = 0;
+fB = 0;
 
 
 %1.5 Generate (normalised) signal samples
