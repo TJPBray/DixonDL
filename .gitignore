@@ -11,8 +11,8 @@
 
 # Specific visualisation files (from external repo) #
 ######################
-main/Visualisation/slanCM/*
+Visualisation/slanCM/*
 
 # Data #
 ######################
-main/Results/*
+Results/*
