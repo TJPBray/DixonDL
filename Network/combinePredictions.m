@@ -6,10 +6,12 @@ function combinedPredictions = combinePredictions(pred1, pred2, settings, signal
 %of s0 is first calculated.
 
 % Input:
-% pred1 is m x n matrix of predictions from first network
+% pred1 is m x n matrix of predictions from first network, where m is the
+% number of examples and n is the number of parameters
 % pred2 is m x n matrix of predictions from second network
-% settings is a structure containing the field strenght, echotimes and noise sigma
-% signals is a m x t matrix containing the signals
+% settings is a structure containing the field strength, echotimes and noise sigma
+% signals is a m x t matrix containing the signals, where t is the number
+% of echo times
 % normsignals is a m x t matrix containing the normalised signals (both
 % pieces of information are available)
 

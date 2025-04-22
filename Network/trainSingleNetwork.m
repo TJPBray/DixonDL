@@ -4,10 +4,11 @@ function nets = trainSingleNetwork(settings)
 %function nets = trainNetworks(settings)
 
 %Input:
-%Settings is a structure containing TE values an field strength
+%Settings is a structure containing TE values and field strength
 
 %Output:
-%nets is a structure containing two neural networks ('fat net' and 'water net')
+%nets is a structure containing one neural network (duplicated to enable
+%ease of evaluation compared to dual neural networks)
 
 %% 0.0 Specify field strength and echotimes
 %Specify field strength

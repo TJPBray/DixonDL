@@ -7,7 +7,7 @@ function [paramVec, sVec] = sVecFixedSpacing(S0,FFvals,R2vals,settings)
 % Input:
 % S0 is the signal intensity at t=0
 % FFvalues is an ax1 vector of the chosen FF values
-% R2 values is a 1xb vector o the chosen R2 values
+% R2 values is a 1xb vector of the chosen R2 values
 % settings.tesla is field strength in tesla
 % settings.echotimes is echotime scheme
 
