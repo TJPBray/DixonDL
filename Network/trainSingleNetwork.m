@@ -177,19 +177,19 @@ outputName = 'FF R2*';
 %     regressionLayer('Name', outputName);
 %     ];
 % 
-% layers = [
-%     featureInputLayer(numOfFeatures, 'Name', inputName);
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
-%     eluLayer;
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
-%     eluLayer;
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
-%     eluLayer;
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
-%     eluLayer;
-%     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
-%     regressionLayer('Name', outputName);
-%     ];
+layers = [
+    featureInputLayer(numOfFeatures, 'Name', inputName);
+    fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
+    eluLayer;
+    fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
+    eluLayer;
+    fullyConnectedLayer(numOfFeatures, 'Name', 'fc3');
+    eluLayer;
+    fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
+    eluLayer;
+    fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
+    regressionLayer('Name', outputName);
+    ];
 
 % layers = [
 %     featureInputLayer(numOfFeatures, 'Name', inputName);
@@ -209,27 +209,58 @@ outputName = 'FF R2*';
 %     regressionLayer('Name', outputName);
 %     ];
 
-layers = [
-    featureInputLayer(numOfFeatures, 'Name', inputName);
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc1');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc2');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc3');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc4');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc5');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc6');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc7');
-    eluLayer;
-    fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc8');
-    eluLayer;
-    fullyConnectedLayer(numOfOutput, 'Name', 'fc9');
-    regressionLayer('Name', outputName);
-    ];
+
+%Wide and deep
+% layers = [
+%     featureInputLayer(numOfFeatures, 'Name', inputName);
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc1');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc2');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc3');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc4');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc5');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc6');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc7');
+%     eluLayer;
+%     fullyConnectedLayer(2*numOfFeatures, 'Name', 'fc8');
+%     eluLayer;
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc9');
+%     regressionLayer('Name', outputName);
+%     ];
+
+%Superwide (3x) and superdeep (12 fully connected layers)
+% layers = [
+%     featureInputLayer(numOfFeatures, 'Name', inputName);
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc1');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc2');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc3');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc4');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc5');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc6');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc7');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc8');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc9');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc10');
+%     eluLayer;
+%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc11');
+%     eluLayer;
+%     fullyConnectedLayer(numOfOutput, 'Name', 'fc12');
+%     regressionLayer('Name', outputName);
+%     ];
 
 % number of layers
 numOfLayers = size(layers, 1);
@@ -248,7 +279,6 @@ numOfLayers = size(layers, 1);
 %
 options = trainingOptions('adam', ...
     'MaxEpochs',50, ...
-    'ValidationPatience', 50, ....
     'OutputNetwork','best-validation-loss',...
     'ValidationData', {xValidation, yValidation},...
     'InitialLearnRate',1e-3, ...
@@ -256,7 +286,8 @@ options = trainingOptions('adam', ...
     'L2Regularization',0,... %No regularisation as low FF values should not be preferred
     'Verbose',false, ...
     'Plots','training-progress'); 
-   
+       
+%     'ValidationPatience', 50, ....
 
 %% 5.0 Training
 
