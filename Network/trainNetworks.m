@@ -26,12 +26,6 @@ sz = 100000;
 %R2* due to increased peak width) 
 curtail = 1; %1 = no restriction of training range
 
-%Specify dataset size for reduced dataset 
-sz(2) = sz*curtail; 
-
-% Create loop to enable training twice (with two different ffRanges)
-for k = 1:2
-
 % 1.1 First try uniformly spaced samples over the parameter space (vary
 % both FF and R2*)
 
@@ -43,49 +37,34 @@ S0 = 50;
 
 % 1.2 Specify ff Range
 
-    %If using two sets of values, specify switch point
-        switchPoint = 0.58; 
-%       switchPoint = 0.63; 
-    
-    ffRanges = [0 switchPoint; switchPoint 1];
-
     %Select range depending on value of k 
-    ffRange = ffRanges(k,:);
+    ffRange = [0 1];
     
-    %Create vector of ff values
-    FFvec=ffRange(1) + (ffRange(2)-ffRange(1))*rand(sz(k),1);
+    %Create vector of ff values for full training distribution
+    FFvecAll=ffRange(1) + (ffRange(2)-ffRange(1))*rand(sz,1);
 
 % 1.3 Specify R2* range
-r2max=0.5;
-
-    %If using two sets of values, specify switch point
-    r2Ranges = [0 r2max; 0 curtail*r2max]; %Restrict high FF R2* values to plausible range
-
-    %Select range depending on value of k 
-    r2Range = r2Ranges(k,:);
+    r2max=0.5;
+    r2Range = [0 r2max]; %Restrict high FF R2* values to plausible range
 
     %Create vector of R2* values
-    R2starvec=r2Range(2)*rand(sz(k),1);
+    R2starvecAll=r2Range(2)*rand(sz(1),1);
 
 %Specify F, W and R2* values
-Fvec=S0*FFvec;
+Fvec=S0*FFvecAll;
 Wvec=S0-Fvec;
-
-%Concatenate vectors chosen for training
-trainingParams=horzcat(FFvec,R2starvec);
 
 %Define fB
 fB = 0;
 
 % (normalised) signal samples
-sNoiseFree = MultiPeakFatSingleR2(echotimes,tesla,Fvec,Wvec,R2starvec,fB);
+sNoiseFree = MultiPeakFatSingleR2(echotimes,tesla,Fvec,Wvec,R2starvecAll,fB);
 
 % Generate noise-free training data
 Sreal = real(sNoiseFree);
 Simag = imag(sNoiseFree);
 
 sCompNoiseFree = horzcat(Sreal,Simag);
-
 sMagNoiseFree = abs(sNoiseFree);
 
 %Create noise (uniform SNR)
@@ -97,24 +76,24 @@ sMagNoiseFree = abs(sNoiseFree);
 snrHigh = 120;
 snrLow = 20; 
 snrRange = snrHigh - snrLow;
-snrVec = snrLow + snrRange*rand(sz(k),1);
+snrVec = snrLow + snrRange*rand(sz,1);
 noiseSdVec = S0./snrVec; 
 noiseSdMat = repmat(noiseSdVec,1,numel(echotimes));
 
-realnoise=noiseSdMat.*randn(sz(k),numel(echotimes));
-imagnoise=1i*noiseSdMat.*randn(sz(k),numel(echotimes));
+realnoise=noiseSdMat.*randn(sz,numel(echotimes));
+imagnoise=1i*noiseSdMat.*randn(sz,numel(echotimes));
 
 noise = realnoise + imagnoise; 
 
-% %Visualise noise
-% figure
-% subplot(1,2,1)
-% scatter(real(noise),imag(noise))
-% title('Complex noise')
-% 
-% subplot(1,2,2)
-% hist(abs(noise(:,1)),20)
-% title('Magnitude of noise')
+%Visualise noise
+figure
+subplot(1,2,1)
+scatter(real(noise),imag(noise))
+title('Complex noise')
+
+subplot(1,2,2)
+hist(abs(noise(:,1)),20)
+title('Magnitude of noise')
 
 % Add noise to signal to create noisy signal
 sCompNoisy = sNoiseFree + noise; 
@@ -133,13 +112,47 @@ S = sMagNoisy;
 else ;
 end
 
-%% Normalise signals 
+%% Normalise signals (divide by estimated S0)
 
-%Normalise each voxel separately
-[Snorm , s0estimates] = normaliseSignals(S,settings);
+Snorm = normaliseSignals(S,settings);
 
-%Otherwise, normalise all together 
 S = Snorm;
+
+sAll = S; 
+
+%% Create loop to enable training twice (with two different ffRanges)
+for k = 1:2
+
+% 1.1 Specify switch point
+    switchPoint = 0.58; 
+       
+% 1.2 Create vector of ff values for relevant region of paramter space
+
+if k == 1
+    FFvec = FFvecAll(FFvecAll<=switchPoint);
+    R2starvec = R2starvecAll(FFvecAll<=switchPoint);
+    S = sAll((FFvecAll<=switchPoint),:);
+
+elseif k == 2
+
+    FFvec = FFvecAll(FFvecAll>switchPoint);
+    R2starvec = R2starvecAll(FFvecAll>switchPoint);
+    S = sAll((FFvecAll>switchPoint),:);
+
+else ; 
+end 
+
+figure, scatter(FFvec,R2starvec)
+xlim([0 1])
+ylim([0 .5]) 
+
+%1.3 Specify F, W and R2* values
+Fvec=S0*FFvec;
+Wvec=S0-Fvec;
+
+%Concatenate vectors chosen for training
+trainingParams=horzcat(FFvec,R2starvec);
+
 
 %% 2.0 Split synthesised data into the training and validation set
 %
@@ -154,7 +167,7 @@ S = Snorm;
 hPercentage = 0.2;
 
 % use matlab's built-in cvpartition
-hPartition = cvpartition(sz(k), 'Holdout', hPercentage);
+hPartition = cvpartition(size(FFvec,1), 'Holdout', hPercentage);
 
 % get indices of the training and validation set
 idxTrain = training(hPartition);
