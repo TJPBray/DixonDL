@@ -8,3 +8,11 @@
 ._*
 .Spotlight-V100
 .Trashes
+
+# Specific visualisation files (from external repo) #
+######################
+/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Visualisation/slanCM/*
+
+# Data #
+######################
+/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO DL/DixonDL/Visualisation/slanCM/*
