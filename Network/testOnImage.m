@@ -16,7 +16,7 @@ sliceIntensity = mean(image,[1 2]);
 prc = prctile(image(:,:,2),99,'all');
 maxImage = max(image(:,:,:),[],'all');
 
-%% Loop over voxels 
+%% Get predictions 
 
 %Specify indent
 indent = 0;
@@ -42,7 +42,6 @@ prediction3 = combinePredictions(prediction1, prediction2, settings, signalsMat,
 prediction1 = reshape(prediction1, [size(image,1) size(image,2) 2]);
 prediction2 = reshape(prediction2, [size(image,1) size(image,2) 2]);
 prediction3 = reshape(prediction3, [size(image,1) size(image,2) 3]);
-
 
 % %Start loop
 % for y = indent+1:(size(image,1)-indent)
