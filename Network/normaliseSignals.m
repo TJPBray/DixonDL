@@ -28,22 +28,22 @@ echotimes = settings.echotimes;
 % If 3T
 if round(settings.fieldStrength) == 3
 
-ip1Distance = echotimes - 2.3;
-[min1,ind1] = min(abs(ip1Distance));
+    ip1Distance = echotimes - 2.3;
+    [min1,ind1] = min(abs(ip1Distance));
 
-ip2Distance = echotimes - 4.6;
-[min2,ind2] = min(abs(ip2Distance));
+    ip2Distance = echotimes - 4.6;
+    [min2,ind2] = min(abs(ip2Distance));
 
-%If 1.5T
+    %If 1.5T
 elseif round(2*settings.fieldStrength) == 3 %Rounding accounts for scanners close to but not exactly 1.5 or 3T)
 
-ip1Distance = echotimes - 4.6;
-[min1,ind1] = min(abs(ip1Distance));
+    ip1Distance = echotimes - 4.6;
+    [min1,ind1] = min(abs(ip1Distance));
 
-ip2Distance = echotimes - 9.2;
-[min2,ind2] = min(abs(ip2Distance));
+    ip2Distance = echotimes - 9.2;
+    [min2,ind2] = min(abs(ip2Distance));
 
-else ; 
+else ;
 end
 
 %% Get dimensions of signals (may be matrix with multiple different signals) and loop through each set of signals
@@ -57,40 +57,40 @@ s0estimates = zeros(dim,1);
 
 parfor k = 1:dim
 
-%% 2. Find s0 estimate for each set of signals
+    %% 2. Find s0 estimate for each set of signals
 
-%2.1 Get signals for each row
+    %2.1 Get signals for each row
 
-signalRow = signals(k,:);
+    signalRow = signals(k,:);
 
-%2.2. Approximate S0 by
+    %2.2. Approximate S0 by
 
-% (i) extrapolating back to S0 from ind1 and ind2
+    % (i) extrapolating back to S0 from ind1 and ind2
 
-r2estimate(k,:) = -log(signalRow(ind1)/signalRow(ind2))...
-    /(echotimes(ind1) - echotimes(ind2));
+    r2estimate(k,:) = -log(signalRow(ind1)/signalRow(ind2))...
+        /(echotimes(ind1) - echotimes(ind2));
 
-s0estimate1 = signalRow(ind1)*exp(r2estimate(k,:)*echotimes(ind1));
+    s0estimate1 = signalRow(ind1)*exp(r2estimate(k,:)*echotimes(ind1));
 
-% or
+    % or
 
-% (ii) taking the max of the signal vectors
+    % (ii) taking the max of the signal vectors
 
-s0estimate2 = max(signalRow);
+    s0estimate2 = max(signalRow);
 
-%Choose the higher estimate of these two options
-s0estimate3 = max(s0estimate1, s0estimate2);
+    %Choose the higher estimate of these two options
+    s0estimate3 = max(s0estimate1, s0estimate2);
 
-s0estimates(k) = s0estimate3;
+    s0estimates(k) = s0estimate3;
 
-%2.3 Incorporate inaccurate S0 normalisation if this has been specified
-% if isfield(settings,'normInaccuracyConstant') == 1
-% s0estimates(k,1) = s0estimates(k,:)*settings.normInaccuracyConstant;
-% else;
-% end
+    %2.3 Incorporate inaccurate S0 normalisation if this has been specified
+    % if isfield(settings,'normInaccuracyConstant') == 1
+    % s0estimates(k,1) = s0estimates(k,:)*settings.normInaccuracyConstant;
+    % else;
+    % end
 
-%% 3. Strategy 1: Normalise by different s0 estimate for each voxel
-normSignals(k,:) = signalRow ./ s0estimate3; 
+    %% 3. Strategy 1: Normalise by different s0 estimate for each voxel
+    normSignals(k,:) = signalRow ./ s0estimate3;
 
 end
 
@@ -100,7 +100,7 @@ end
 % correctionFactor = 1;
 
 % %Normalise
-% normSignals = signals / max(signals,[],'all'); 
+% normSignals = signals / max(signals,[],'all');
 
 end
 
