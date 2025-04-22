@@ -19,11 +19,11 @@ function  createFigDLvsConventionalFitting(FFmaps, R2maps, dlMaps, errormaps, dl
 
 figure('Name', 'Parameter error for PDFF: DL vs conventional fitting')
 subplot(3,3,1)
-image(FFmaps.standard,'CDataMapping','scaled')
+image(FFmaps.complex,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 1];
 FigLabels;
-title('Gaussian FF')
+title('FF')
 h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
@@ -33,7 +33,7 @@ image(FFmaps.Rician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 1];
 FigLabels;
-title('Rician FF')
+title('FF')
 h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
@@ -43,17 +43,17 @@ image(dlMaps.ff,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 1];
 FigLabels;
-title('DL FF')
+title('FF')
 h=colorbar;
 h.Label.String = "FF";
 h.Label.FontSize = 12;
 
 subplot(3,3,4)
-image(errormaps.FFstandard,'CDataMapping','scaled')
+image(errormaps.FFcomplex,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[-.2 .2];
 FigLabels;
-title('Gaussian FF error')
+title('FF error')
 h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
@@ -63,7 +63,7 @@ image(errormaps.FFRician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[-.2 .2];
 FigLabels;
-title('Rician FF error')
+title('FF error')
 h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
@@ -73,17 +73,17 @@ image(dlErrormaps.ff,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[-.2 .2];
 FigLabels;
-title(['DL FF error'])
+title(['FF error'])
 h=colorbar;
 h.Label.String = "FF error";
 h.Label.FontSize = 12;
 
 subplot(3,3,7)
-image(sdMaps.FFstandard,'CDataMapping','scaled')
+image(sdMaps.FFcomplex,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 .3];
 FigLabels;
-title('Gaussian FF SD')
+title('FF SD')
 h=colorbar;
 h.Label.String = "FF SD";
 h.Label.FontSize = 12;
@@ -93,7 +93,7 @@ image(sdMaps.FFRician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 .3];
 FigLabels;
-title('Rician FF SD')
+title('FF SD')
 h=colorbar;
 h.Label.String = "FF SD";
 h.Label.FontSize = 12;
@@ -103,13 +103,13 @@ image(dlSdMaps.ff,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 .3];
 FigLabels;
-title('DL FF SD')
+title('FF SD')
 h=colorbar;
 h.Label.String = "FF SD";
 h.Label.FontSize = 12;
 
 %Print mean absolute error
-sum(abs(errormaps.FFstandard),'all')
+sum(abs(errormaps.FFcomplex),'all')
 sum(abs(errormaps.FFRician),'all')
 sum(abs(dlErrormaps.ff),'all')
 
@@ -118,11 +118,11 @@ sum(abs(dlErrormaps.ff),'all')
 figure('Name', 'Parameter error for R_2^*: DL vs conventional fitting')
 
 subplot(3,3,1)
-image(1000*R2maps.Rician,'CDataMapping','scaled')
+image(1000*R2maps.complex,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 500];
 FigLabels;
-title('Gaussian R_2^*')
+title('R_2^*')
 h=colorbar;
 h.Label.String = "R_2^* (s^-^1)";
 h.Label.FontSize = 12;
@@ -132,7 +132,7 @@ image(1000*R2maps.Rician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 500];
 FigLabels;
-title('Rician R_2^*')
+title('R_2^*')
 h=colorbar;
 h.Label.String = "R_2^* (s^-^1)";
 h.Label.FontSize = 12;
@@ -142,17 +142,17 @@ image(1000*dlMaps.r2,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 500];
 FigLabels;
-title('DL R_2^*')
+title('R_2^*')
 h=colorbar;
 h.Label.String = "R_2^* (s^-^1)";
 h.Label.FontSize = 12;
 
 subplot(3,3,4)
-image(1000*errormaps.R2standard,'CDataMapping','scaled')
+image(1000*errormaps.R2complex,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[-100 100];
 FigLabels;
-title('Gaussian R_2^* error')
+title('R_2^* error')
 h=colorbar;
 h.Label.String = "R_2^* error (s^-^1)";
 h.Label.FontSize = 12;
@@ -162,7 +162,7 @@ image(1000*errormaps.R2Rician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[-100 100];
 FigLabels;
-title('Rician R_2^* error')
+title('R_2^* error')
 h=colorbar;
 h.Label.String = "R_2^* error (s^-^1)";
 h.Label.FontSize = 12;
@@ -172,18 +172,18 @@ image(1000*dlErrormaps.R2,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[-100 100];
 FigLabels;
-title(['DL R_2^* error'])
+title(['R_2^* error'])
 h=colorbar;
 h.Label.String = "R_2^* error (s^-^1)";
 h.Label.FontSize = 12;
 
 
 subplot(3,3,7)
-image(1000*sdMaps.R2standard,'CDataMapping','scaled')
+image(1000*sdMaps.R2complex,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 100];
 FigLabels;
-title('Gaussian R_2^* SD')
+title('R_2^* SD')
 h=colorbar;
 h.Label.String = "R2* SD (s^-^1)";
 h.Label.FontSize = 12;
@@ -193,7 +193,7 @@ image(1000*sdMaps.R2Rician,'CDataMapping','scaled')
 ax=gca;
 ax.CLim=[0 100];
 FigLabels;
-title('Rician R_2^* SD')
+title('R_2^* SD')
 h=colorbar;
 h.Label.String = "R2* SD (s^-^1)";
 h.Label.FontSize = 12;
@@ -208,10 +208,9 @@ h=colorbar;
 h.Label.String = "R2* SD (s^-^1)";
 h.Label.FontSize = 12;
 
-%1.5 Print mean absolute error
-% sum(abs(sdMaps.FFstandard),'all')
-% sum(abs(dlSdMaps.ff),'all')
-% sum(abs(sdMaps.R2standard),'all')
-% sum(abs(dlSdMaps.r2),'all')
+% 1.5 Print mean absolute error
+sum(abs(errormaps.R2complex),'all')
+sum(abs(errormaps.R2Rician),'all')
+sum(abs(dlErrormaps.R2),'all')
 
 
