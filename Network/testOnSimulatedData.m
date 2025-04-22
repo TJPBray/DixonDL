@@ -16,7 +16,7 @@ tesla = settings.fieldStrength;
 S0=10;
 FFvals = (0:0.01:1)';
 R2vals = (0:0.05*r2max:r2max);
-   
+
 %Set noise SD based on SNR
 noiseSD = S0/settings.SNR;
 settings.noiseSD = settings;
@@ -36,40 +36,40 @@ if settings.noisyTesting == 0
 
     settings.sigmaEst = 0
 elseif settings.noisyTesting == 1
-% Otherwise, estimate noiseSD using test voxels
+    % Otherwise, estimate noiseSD using test voxels
     settings.sigmaEst = estimateSigmaForSimulation(S0, settings, 100);
-else ; 
+else ;
 end
 
 
-%Loop over noise instantiations 
+%Loop over noise instantiations
 reps = 100;
 
-for r = 1:reps
+parfor r = 1:reps
 
-%Create noise
-realnoise=(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
-imagnoise=1i*(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
+    %Create noise
+    realnoise=(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
+    imagnoise=1i*(noiseSD)*randn(size(sVecNoiseFree,1),numel(echotimes));
 
-%Add noise to signal 
-if settings.noisyTesting == 0
-sVec = sVecNoiseFree;
-elseif settings.noisyTesting == 1
-sVec = sVecNoiseFree + realnoise + imagnoise;
-end
+    %Add noise to signal
+    if settings.noisyTesting == 0
+        sVec = sVecNoiseFree;
+    elseif settings.noisyTesting == 1
+        sVec = sVecNoiseFree + realnoise + imagnoise;
+    end
 
-%Magnitude
-sVec = abs(sVec);
+    %Magnitude
+    sVec = abs(sVec);
 
-xTestNoNorm(:,:,r) = sVec;
+    xTestNoNorm(:,:,r) = sVec;
 
-% Normalisation
-sVecNorm = normaliseSignals(sVec,settings);
+    % Normalisation
+    sVecNorm = normaliseSignals(sVec,settings);
 
-xTest(:,:,r) = sVecNorm;
+    xTest(:,:,r) = sVecNorm;
 
-% Complex
-% xTest(:,:,r) = horzcat(real(sVec),imag(sVec));
+    % Complex
+    % xTest(:,:,r) = horzcat(real(sVec),imag(sVec));
 
 end
 
@@ -92,14 +92,14 @@ choiceVec = choiceVecSSE;
 tic
 for r = 1:reps
 
-%Get net1 predictions
-predictionVec1(:,:,r)= nets.net1.predict(xTest(:,:,r));
+    %Get net1 predictions
+    predictionVec1(:,:,r)= nets.net1.predict(xTest(:,:,r));
 
-%Get net2 predictions
-predictionVec2(:,:,r)= nets.net2.predict(xTest(:,:,r));
+    %Get net2 predictions
+    predictionVec2(:,:,r)= nets.net2.predict(xTest(:,:,r));
 
-%Combine predictions 
-predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTestNoNorm(:,:,r), xTest(:,:,r));
+    %Combine predictions
+    predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTestNoNorm(:,:,r), xTest(:,:,r));
 
 end
 toc
@@ -109,14 +109,14 @@ toc
 % %First reorganise data
 % xTestPermuted = permute(xTest,[1 3 2]);
 % xTestReshaped = reshape(xTestPermuted,[size(xTest,1)*size(xTest,3),size(xTest,2),1]);
-% 
+%
 % %Get predictions
 % prediction1 =nets.net1.predict(xTestReshaped);
 % prediction2 =nets.net2.predict(xTestReshaped);
-% 
+%
 % %With image-based normalisation for likelihood calc
 % prediction3 = combinePredictions(prediction1, prediction2, settings, xTestReshaped, xTestReshaped);
-% 
+%
 % prediction1 = reshape(prediction1,size(xTest,1),reps,2);
 % prediction1 = permute(prediction1,[1 3 2]);
 % prediction2 = reshape(prediction2,size(xTest,1),reps,2);
@@ -127,30 +127,30 @@ toc
 
 % %% Loop over 'voxels' / noise instantiations (parfor)
 % parfor r = 1:reps
-% 
+%
 % %Net1
 % predictionVec1=nets.net1.predict(xTest(:,:,r));
 % [likVec1,sseVec1] = sseVecCalc (echotimes, tesla, predictionVec1, xTest(:,:,r), noiseSD);
-% 
+%
 % %Net2
 % predictionVec2=nets.net2.predict(xTest(:,:,r));
 % [likVec2,sseVec2] = sseVecCalc (echotimes, tesla, predictionVec2, xTest(:,:,r), noiseSD);
-% 
+%
 % %8.2 Create binary vector to choose between values
 % choiceVecRic=(likVec1>likVec2)';
 % choiceVecSSE=(sseVec1<sseVec2)';
-% 
+%
 % choiceVec = choiceVecSSE;
-% 
+%
 % %8.3 Create predictionVec with best likelihood estimates:
 % predictionVec3(:,:,r) = choiceVec.*predictionVec1 + (1-choiceVec).*predictionVec2;
-% 
-% %8.4 Create predictionVec by using the third network 
-% % 
+%
+% %8.4 Create predictionVec by using the third network
+% %
 % % xTest2(:,:,r) = horzcat(sseVec1(:,:,r)', sseVec2(:,:,r)', predictionVec1(:,:,r), predictionVec2(:,:,r));
-% % 
+% %
 % % predictionVec4(:,:,r) = net3.predict(xTest2(:,:,r));
-% 
+%
 % end
 
 
@@ -162,14 +162,14 @@ toc
 %dispSl specifies the instantiation
 dispSl = 1;
 
-createFigDL(predictionVec1(:,:,dispSl), std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, mean values');
-createFigDL(predictionVec2(:,:,dispSl), std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, mean values');
-createFigDL(predictionVec3(:,:,dispSl), std(predictionVec1,0,3), yTest,FFvals,R2vals,'Likelihood combined nets, mean values');
+createFigDL(predictionVec1(:,:,dispSl), std(predictionVec1,0,3), yTest,FFvals,R2vals,S0, 'Low FF net, mean values');
+createFigDL(predictionVec2(:,:,dispSl), std(predictionVec2,0,3), yTest,FFvals,R2vals,S0, 'High FF net, mean values');
+createFigDL(predictionVec3(:,:,dispSl), std(predictionVec3,0,3), yTest,FFvals,R2vals,S0,'Likelihood combined nets, mean values');
 % createFigDL(predictionVec4(:,:,dispSl), yTest,FFvals,R2vals,'Third network, mean values');
 
-createFigDL(mean(predictionVec1,3), std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, mean values');
-createFigDL(mean(predictionVec2,3), std(predictionVec2,0,3), yTest,FFvals,R2vals, 'High FF net, mean values');
-[dlMaps,dlErrormaps,sdMaps] = createFigDL(mean(predictionVec3,3), std(predictionVec3,0,3), yTest,FFvals,R2vals,'Likelihood combined nets, mean values');
+createFigDL(mean(predictionVec1,3), std(predictionVec1,0,3), yTest,FFvals,R2vals,S0, 'Low FF net, mean values');
+createFigDL(mean(predictionVec2,3), std(predictionVec2,0,3), yTest,FFvals,R2vals,S0, 'High FF net, mean values');
+[dlMaps,dlErrormaps,sdMaps] = createFigDL(mean(predictionVec3,3), std(predictionVec3,0,3), yTest,FFvals,R2vals,S0,'Likelihood combined nets, mean values');
 % createFigDL(mean(predictionVec4,3), yTest,FFvals,R2vals,'Third network, mean values');
 
 % createSDFigDL(std(predictionVec1,0,3), yTest,FFvals,R2vals, 'Low FF net, std');
@@ -179,18 +179,18 @@ createFigDL(mean(predictionVec2,3), std(predictionVec2,0,3), yTest,FFvals,R2vals
 
 %% Show a histogram of values for chosen ground truth FF value
 % gtFF = 0.94;
-% gtR2 = 0.0; 
-% 
+% gtR2 = 0.0;
+%
 % index = find(yTest(:,1)==gtFF & yTest(:,2)==gtR2);
-% 
+%
 % %Get values for chosen ground truth
 % ffValues = predictionVec3(index,1,:);
 % r2Values = predictionVec3(index,2,:);
-% 
+%
 % %Reshape
 % ffValues = reshape(ffValues,[reps 1]);
 % r2Values = reshape(r2Values,[reps 1]);
-% 
+%
 % %Plot
 % figure
 % s1=scatter(ffValues,r2Values);
