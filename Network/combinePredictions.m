@@ -43,7 +43,7 @@ end
 %Use the fact that S = A*S0 where S0 is a scalar factor and A is the
 %remainder of the signal model
 
-% Needs vectorising
+%1. Get an initial A including all echo times
 
 %Net1
 Anet1 = abs(MultiPeakFatSingleR2(echotimes,tesla,pred1(:,1),1-pred1(:,1),pred1(:,2),0));
@@ -51,69 +51,99 @@ Anet1 = abs(MultiPeakFatSingleR2(echotimes,tesla,pred1(:,1),1-pred1(:,1),pred1(:
 %Net2
 Anet2 = abs(MultiPeakFatSingleR2(echotimes,tesla,pred2(:,1),1-pred2(:,1),pred2(:,2),0));
 
-% Loop implementation
-for k = 1:size(Anet1,1)
+%2. Decide on which echo times to use for S0 calculation and find their indices
+% echoChoice = 0 - use all echotimes
+% echoChoice = 1 - use single echotime
+% echoChoice = 2 - use earlist in phase echotimes
 
-    %a. Decide on which echo times to use for S0 calculation and find their indices
-    % echoChoice = 0 - use all echotimes
-    % echoChoice = 1 - use single echotime
-    % echoChoice = 2 - use earlist in phase echotimes
+echoChoice = 0;
 
-    echoChoice = 2;
+%If the choice is to use all echo times, specify this
+if echoChoice == 0
+    ind = 1:1:6;
 
-    %If the choice is to use all echo times, specify this
-    if echoChoice == 0
-        ind = 1:1:6;
+%Otherwise, use single echo time or specified echotimes
+elseif echoChoice == 1
 
-    %Otherwise, use single echo time
-    elseif echoChoice == 1
+%Specify which echo time(s) to use (ind = 1 specifies using the first echo, ind = 1:1:4 specifies first four echoes)
+ind = 1:1:4;
 
-        %Specify which echo time to use (ind = 1 specifies using the first echo)
-        ind = 1;
+%Otherwise, get indices for echotimes closest to in-phase
+elseif echoChoice == 2
 
-    %Otherwise, get indices for echotimes closest to in-phase
-    elseif echoChoice == 2
+    % If 3T
+    if round(settings.fieldStrength) == 3
 
-        % If 3T
-        if round(settings.fieldStrength) == 3
+        ip1Distance = echotimes - 2.3;
+        [min1,ind1] = min(abs(ip1Distance));
 
-            ip1Distance = echotimes - 2.3;
-            [min1,ind1] = min(abs(ip1Distance));
+        ip2Distance = echotimes - 4.6;
+        [min2,ind2] = min(abs(ip2Distance));
 
-            ip2Distance = echotimes - 4.6;
-            [min2,ind2] = min(abs(ip2Distance));
+        %If 1.5T
+    elseif round(2*settings.fieldStrength) == 3 %Rounding accounts for scanners close to but not exactly 1.5 or 3T)
 
-            %If 1.5T
-        elseif round(2*settings.fieldStrength) == 3 %Rounding accounts for scanners close to but not exactly 1.5 or 3T)
+        ip1Distance = echotimes - 4.6;
+        [min1,ind1] = min(abs(ip1Distance));
 
-            ip1Distance = echotimes - 4.6;
-            [min1,ind1] = min(abs(ip1Distance));
+        ip2Distance = echotimes - 9.2;
+        [min2,ind2] = min(abs(ip2Distance));
 
-            ip2Distance = echotimes - 9.2;
-            [min2,ind2] = min(abs(ip2Distance));
-
-
-        end
-
-        %Combine the calculated indices into a single index structure
-        ind = [ind1 ind2];
 
     end
 
-    %b. Get a for each network
-    a1 = Anet1(k,ind)';
-    a2 = Anet2(k,ind)';
+    %Combine the calculated indices into a single index structure
+    ind = [ind1 ind2];
 
-    %c. Get s
+end
+
+%% Loop implementation 
+
+parfor k = 1:size(Anet1,1)
+
+%3. Get a for each network
+a1 = Anet1(k,ind)';
+a2 = Anet2(k,ind)';
+
+%4. Get s
     svox = signals(k,ind)';
 
-    %d. Get s0 estimates
+% 5. Get s0 estimates
     s0est1(k,1) = pinv(a1)*svox;
     s0est2(k,1) = pinv(a2)*svox;
 
 end
 
-% Add S0 estimates to predictions
+%% Vectorised implementation (needs more work as the matrix division is currently slow ?sparse matrix implementation)
+
+% size(Anet1,1)
+% 
+% %3. Get a in block diagonal form for each network
+% 
+% %First get a in non-block diagonal form - one parameter per row
+% a1 = Anet1(:,ind)';
+% a2 = Anet2(:,ind)';
+% 
+% %Quick way to create block diagonal matrices
+% 
+% a1_cell = mat2cell(a1, size(a1,1), ones(1,size(a1,2)));    
+% a1_block = blkdiag(a1_cell{:});
+% 
+% a2_cell = mat2cell(a2, size(a2,1), ones(1,size(a2,2)));    
+% a2_block = blkdiag(a2_cell{:});
+%  
+% 
+% %4. Get s
+% svox = signals(:,ind)';
+% 
+% svox_long = reshape(svox, 2*size(Anet1,1), 1) ;
+% 
+% %5. Get s0 estimates
+%     s0est1 = pinv(a1_block)*svox_long;
+%     s0est2 = pinv(a2_block)*svox_long;
+
+
+%% 5. Add S0 estimates to predictions
 pred1(:,3) = s0est1;
 pred2(:,3) = s0est2;
 
