@@ -88,9 +88,10 @@ choiceVecSSE(1:2121,1,1:100) = zeros;
 choiceVec = choiceVecSSE;
 
 
-%% Loop over 'voxels' / noise instantiations (conventional for loop)
-tic
-for r = 1:reps
+%% Loop over 'voxels' / noise instantiations (for loop)
+
+
+parfor r = 1:reps
 
     %Get net1 predictions
     predictionVec1(:,:,r)= nets.net1.predict(xTest(:,:,r));
@@ -102,7 +103,6 @@ for r = 1:reps
     predictionVec3(:,:,r) = combinePredictions(predictionVec1(:,:,r), predictionVec2(:,:,r), settings, xTestNoNorm(:,:,r), xTest(:,:,r));
 
 end
-toc
 
 %Get predictions for all noise instantiations together (doesn't work yet)
 
