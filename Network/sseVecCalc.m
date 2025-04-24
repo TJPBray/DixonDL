@@ -16,7 +16,7 @@ n=size(predictionVec,1);
 p = zeros(4,1);
 
 
-%% 2. Loop implementation over n values
+%% 2. Loop implementation over n values (slower)
 
 % parfor k=1:n
 % 
@@ -39,7 +39,7 @@ p = zeros(4,1);
 % 
 % end
 
-%% 2. Vectorised implementation
+%% 2. Vectorised implementation (faster)
 
     %2.1 First specify components of p
     f=predictionVec(:,1).*predictionVec(:,3);
