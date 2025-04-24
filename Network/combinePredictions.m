@@ -114,10 +114,8 @@ a2 = Anet2(k,ind)';
 
 end
 
-%% Vectorised implementation (needs more work as the matrix division is currently slow ?sparse matrix implementation)
+%% Vectorised implementation (needs more thought as the matrix division is currently slow)
 
-% size(Anet1,1)
-% 
 % %3. Get a in block diagonal form for each network
 % 
 % %First get a in non-block diagonal form - one parameter per row
@@ -136,11 +134,18 @@ end
 % %4. Get s
 % svox = signals(:,ind)';
 % 
-% svox_long = reshape(svox, 2*size(Anet1,1), 1) ;
+% svox_long = reshape(svox, (numel(ind))*size(Anet1,1), 1) ;
 % 
 % %5. Get s0 estimates
+% %pinv implementation
 %     s0est1 = pinv(a1_block)*svox_long;
 %     s0est2 = pinv(a2_block)*svox_long;
+% 
+% % %lsqminnorm implementation
+% %     s0est1 = lsqminnorm(a1_block,svox_long);
+% %     s0est2 = lsqminnorm(a2_block,svox_long);
+
+
 
 
 %% 5. Add S0 estimates to predictions
