@@ -195,16 +195,6 @@ for k = 1:2
     % name of the output
     outputName = 'FF R2*';
 
-    % layers = [
-    %     featureInputLayer(numOfFeatures, 'Name', inputName);
-    %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
-    %     eluLayer;
-    %     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
-    %     eluLayer;
-    %     fullyConnectedLayer(numOfOutput, 'Name', 'fc3');
-    %     regressionLayer('Name', outputName);
-    %     ];
-
     % create the layers, including elu layers
     layers = [
         featureInputLayer(numOfFeatures, 'Name', inputName);
@@ -217,7 +207,6 @@ for k = 1:2
         fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
         eluLayer;
         fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
-        regressionLayer('Name', outputName);
         ];
 
     % number of layers
@@ -225,6 +214,14 @@ for k = 1:2
 
     % % visualise the layers
     % analyzeNetwork(layers)
+
+    % create a network from the specified layers and initialise any unset learnable and state parameters
+    if k == 1
+    nets.net1 = dlnetwork(layers)
+    elseif k==2
+    nets.net2 = dlnetwork(layers)
+    else ; 
+    end
 
     %% 4.0 Set up the training options
 
@@ -242,13 +239,10 @@ for k = 1:2
         'OutputNetwork','best-validation-loss',...
         'ValidationData', {xValidation, yValidation},...
         'InitialLearnRate',1e-3, ...
-        'MiniBatchSize', 32, ...
+        'MiniBatchSize', 32, ... 
         'L2Regularization',0,...
         'Verbose',false, ...
         'Plots','training-progress');   %No regularisation as low FF values should not be preferred
-
-    % include the validation data
-    options.ValidationData = {xValidation, yValidation};
 
     %% 5.0 Training
 
@@ -257,10 +251,10 @@ for k = 1:2
     % Name networks according to the loop value (net1 for low FF training, net2
     % for high FF training)
     if k == 1
-        [nets.net1,nets.info1] = trainNetwork(xTrain, yTrain, layers, options);
+        [nets.net1,nets.info1] = trainnet(xTrain, yTrain, nets.net1, 'mse', options);
 
     elseif k == 2
-        [nets.net2,nets.info2] = trainNetwork(xTrain, yTrain, layers, options);
+        [nets.net2,nets.info2] = trainnet(xTrain, yTrain, nets.net2, 'mse', options);
 
     else ;
     end

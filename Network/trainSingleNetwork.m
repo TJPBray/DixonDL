@@ -21,7 +21,8 @@ echotimes=settings.echotimes;
 rng(5)
 
 %Specify dataset size
-sz = 100000;
+% sz = 128; %To force overfitting
+sz = 100000; %To optimise training
 
 %Specify curtail factor to restrict R2* values (avoids ambiguity at higher
 %R2* due to increased peak width)
@@ -118,7 +119,11 @@ end
 
 %% Normalise signals (divide by estimated S0)
 
+%Use realistic in vivo normalisation
 Snorm = normaliseSignals(S,settings);
+
+%Otherwise, to understand the effect of normalisation, simply use the known
+% Snorm = S/S0;
 
 S = Snorm;
 
@@ -168,16 +173,7 @@ outputName = 'FF R2*';
 % create the layers, including elu layers (consider 9 layers as per Gyori to
 % optimise fitting as far as possible)
 
-% layers = [
-%     featureInputLayer(numOfFeatures, 'Name', inputName);
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
-%     eluLayer;
-%     fullyConnectedLayer(numOfFeatures, 'Name', 'fc2');
-%     eluLayer;
-%     fullyConnectedLayer(numOfOutput, 'Name', 'fc3');
-%     regressionLayer('Name', outputName);
-%     ];
-%
+%DEFAULT
 layers = [
     featureInputLayer(numOfFeatures, 'Name', inputName);
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc1');
@@ -189,7 +185,6 @@ layers = [
     fullyConnectedLayer(numOfFeatures, 'Name', 'fc4');
     eluLayer;
     fullyConnectedLayer(numOfOutput, 'Name', 'fc5');
-    regressionLayer('Name', outputName);
     ];
 
 % layers = [
@@ -235,29 +230,31 @@ layers = [
 %     ];
 
 %Superwide (3x) and superdeep (12 fully connected layers)
+% widthFactor = 50; 
+% 
 % layers = [
 %     featureInputLayer(numOfFeatures, 'Name', inputName);
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc1');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc1');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc2');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc2');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc3');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc3');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc4');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc4');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc5');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc5');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc6');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc6');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc7');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc7');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc8');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc8');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc9');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc9');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc10');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc10');
 %     eluLayer;
-%     fullyConnectedLayer(3*numOfFeatures, 'Name', 'fc11');
+%     fullyConnectedLayer(widthFactor*numOfFeatures, 'Name', 'fc11');
 %     eluLayer;
 %     fullyConnectedLayer(numOfOutput, 'Name', 'fc12');
 %     regressionLayer('Name', outputName);
@@ -269,6 +266,9 @@ numOfLayers = size(layers, 1);
 % % visualise the layers
 % analyzeNetwork(layers)
 
+% create a network from the specified layers and initialise any unset learnable and state parameters
+nets.net1 = dlnetwork(layers)
+
 %% 4.0 Set up the training options
 
 % set up the training options with Stochastic Gradient Descent
@@ -278,6 +278,8 @@ numOfLayers = size(layers, 1);
 % Note that Matlab implementation appears to discard the last few training
 % samples that do not completely fill up a mini-batch.
 %
+
+% RAIDER MELBA training options
 options = trainingOptions('adam', ...
     'MaxEpochs',50, ...
     'OutputNetwork','best-validation-loss',...
@@ -288,12 +290,26 @@ options = trainingOptions('adam', ...
     'Verbose',false, ...
     'Plots','training-progress');
 
-%     'ValidationPatience', 50, ....
+% Training options to fit a large network well
+% maxEpochs = 50;
+% 
+% options = trainingOptions('adam', ...
+%     'MaxEpochs',maxEpochs, ...
+%     'InitialLearnRate',1e-3, ...
+%     'LearnRateSchedule', "piecewise", ...
+%     'LearnRateDropFactor',0.2, ...
+%     'LearnRateDropPeriod',maxEpochs/10, ... %10 drops over training period with drop factor of 0.2 gives learning rate of approximately 1/10 by the end of training
+%     'OutputNetwork','best-validation-loss',...
+%     'ValidationData', {xValidation, yValidation},...
+%     'MiniBatchSize', 64, ...
+%     'L2Regularization',0,... %No regularisation as low FF values should not be preferred
+%     'Verbose',false, ...
+%     'Plots','training-progress');
 
 %% 5.0 Training
 
 % Run the training
-[nets.net1,nets.info1] = trainNetwork(xTrain, yTrain, layers, options);
+[nets.net1,nets.info1] = trainnet(xTrain, yTrain, nets.net1, 'mse', options);
 
 % Export duplicate of first network (simplifies code as avoids need to create a separate script for only one network)
 nets.net2 = nets.net1;
