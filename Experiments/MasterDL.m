@@ -3,7 +3,7 @@
 % Author: Tim Bray (t.bray@ucl.ac.uk)
 
 %% Set user path
-userpath('/Users/tjb57/Dropbox/MATLAB/');
+% userpath('/Users/tjb57/Dropbox/MATLAB/');
 up = userpath;
 
 %% 1. Simulations
@@ -20,31 +20,35 @@ settings.tuning.useImplausibleValues = 0;
 settings.tuning.clipOutputs = 0;
 
 %% 1.1 First single network only
-% Note: trainSignleNetworks actually returns two networks but one is a duplicate of the first - simplifies code by avoiding need for separate single-network script)
+% Note: trainSingleNetworks actually returns two networks but one is a duplicate of the first - simplifies code by avoiding need for separate single-network script)
 
 %Train in the absence of noise
 settings.noisyTraining = 0;
 net = trainSingleNetwork(settings);
-trainingCurves(net)
+trainingCurves(net,'Noise free training')
 
 %Train in the presence of noise
 settings.noisyTraining = 1;
 net = trainSingleNetwork(settings);
-trainingCurves(net)
+trainingCurves(net,'Noisy training')
 
 %Test on simulation data (noise-free)
-% settings.SNR = inf;
-% settings.noisyTesting = 0;
-% [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
+settings.SNR = inf;
+settings.noisyTesting = 0;
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
+meanFfError = mean(abs(dlErrormaps.ff),'all')
+meanR2Error = mean(abs(dlErrormaps.R2),'all')
 
 %Test on simulation data (with noise)
 settings.SNR = 60;
 settings.noisyTesting = 1;
 [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(net,settings)
+meanFfError = mean(abs(dlErrormaps.ff),'all')
+meanR2Error = mean(abs(dlErrormaps.R2),'all')
 
 %Show comparison vs conventional fitting
 %Load conventional fitting data for comparison
-load(strcat(up,'/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/6 echoes/MAGORINO_Simulation_Results_SNR60_R100_fineGrain_6echoes_withComplex.mat'))
+load(strcat(up,'/Fat-water MAGORINO DL/DixonDL/Results/SimulationResults/6 echoes/MAGORINO_Simulation_Results_SNR60_R100_fineGrain_6echoes.mat'))
 
 %Visualise comparison against conventional fitting
 createFigDLvsConventionalFitting(FFmaps, R2maps, dlMaps, errormaps, dlErrormaps, dlSDMaps, sdmaps)
@@ -62,15 +66,18 @@ nets = trainNetworks(settings);
 trainingCurves(nets)
 
 %Test on simulation data (noise-free)
-% settings.SNR = inf;
-% settings.noisyTesting = 0;
-% [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+settings.SNR = inf;
+settings.noisyTesting = 0;
+[dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+meanFfError = mean(abs(dlErrormaps.ff),'all')
+meanR2Error = mean(abs(dlErrormaps.R2),'all')
 
 %Test on simulation data (with noise)
 settings.SNR = 60;
-settings.SNR = 30;
 settings.noisyTesting = 1;
 [dlMaps,dlErrormaps,dlSDMaps] = testOnSimulatedData(nets,settings)
+meanFfError = mean(abs(dlErrormaps.ff),'all')
+meanR2Error = mean(abs(dlErrormaps.R2),'all')
 
 %Show comparison vs conventional fitting
 %Load conventional fitting data for comparison
@@ -128,23 +135,24 @@ clear all
 %2.1 Load chosen dataset
 
 % Example cases:
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW101_bipolar.mat');
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/FW101_bipolar_sigmaRoi.mat')
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/Rev2_FW101_results'); prc = 60; yDisp = (20:260);
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/FW101_bipolar.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/FW101_bipolar_sigmaRoi.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Experiments/experimentResults/Rev2_FW101_results')); prc = 60; yDisp = (20:260);
 slice = 20; sigmaEst = 33.6073;
 %
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData.mat');
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/LegsSwapData_sigmaRoi.mat')
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/Rev2_LegsSwapData_results.mat'); prc = 86; yDisp = (70:170);
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/LegsSwapData.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/LegsSwapData_sigmaRoi.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Experiments/experimentResults/Rev2_LegsSwapData_results.mat')); prc = 86; yDisp = (1:170);
 slice = 20; sigmaEst = 5.3559;
 
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen.mat');
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen_sigmaRoi.mat')
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/wbMriAbdomen_sigmaRoi.mat')); 
+load(strcat(up,'/Fat-water MAGORINO/Experiments/experimentResults/wbMRI_abdoPelvis.mat')); prc = 86; yDisp = (1:170);prc = 65; yDisp = (1:192);
 slice = 40; sigmaEst = 3.4585;
 %
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriThorax.mat');
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Data/Subjects/wbMriThorax_sigmaRoi.mat')
-load('/Users/tjb57/Dropbox/MATLAB/Fat-water MAGORINO/Experiments/experimentResults/wbmri_thorax.mat'); prc = 68; yDisp = (1:192);
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/wbMriThorax.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Data/Subjects/wbMriThorax_sigmaRoi.mat'));
+load(strcat(up,'/Fat-water MAGORINO/Experiments/experimentResults/wbmri_thorax.mat')); prc = 68; yDisp = (1:192);
 slice = 40; sigmaEst = 5.5703;
 
 % Others:
@@ -214,8 +222,9 @@ end
 %     end
 % end
 
-% Concatenate for time calculation
-sliceN = 10;
+% Concatenate for time calculation (does not necessarily need to time
+% saving compared to a loop with a CPU)
+sliceN = 1;
 repSlice = repmat(magnitudeSlice,[sliceN 1 1]);
 
 %Call the function
