@@ -55,33 +55,72 @@ dim = size(signals,1);
 signalRow = zeros(1,size(signals,2));
 s0estimates = zeros(dim,1);
 
-parfor k = 1:dim
 
-    %% 2. Find s0 estimate for each set of signals
+
+%% 2. Find s0 estimate for each set of signals
+
+%% LOOP IMPLEMENTATION (SLOWER)
 
     %2.1 Get signals for each row
+%     tic
+%     parfor k = 1:dim
+% 
+%     signalRow = signals(k,:);
+% 
+%     %2.2. Approximate S0 by
+% 
+%     % (i) extrapolating back to S0 from ind1 and ind2
+% 
+%     r2estimate(k,:) = -log(signalRow(ind1)/signalRow(ind2))...
+%         /(echotimes(ind1) - echotimes(ind2));
+% 
+%     s0estimate1 = signalRow(ind1)*exp(r2estimate(k,:)*echotimes(ind1));
+% 
+%     % or
+% 
+%     % (ii) taking the max of the signal vectors
+% 
+%     s0estimate2 = max(signalRow);
+% 
+%     %Choose the higher estimate of these two options
+%     s0estimate3 = max(s0estimate1, s0estimate2);
+% 
+%     s0estimates(k) = s0estimate3;
+% 
+%     %2.3 Incorporate inaccurate S0 normalisation if this has been specified
+%     % if isfield(settings,'normInaccuracyConstant') == 1
+%     % s0estimates(k,1) = s0estimates(k,:)*settings.normInaccuracyConstant;
+%     % else;
+%     % end
+% 
+%     % 3. Strategy 1: Normalise by different s0 estimate for each voxel
+%     normSignals(k,:) = signalRow ./ s0estimate3;
+% 
+%     end
+%     toc
 
-    signalRow = signals(k,:);
+%% VECTORISED IMPLEMENTATION (FASTER)
+
+%     signalRow = signals(k,:);
 
     %2.2. Approximate S0 by
 
     % (i) extrapolating back to S0 from ind1 and ind2
-
-    r2estimate(k,:) = -log(signalRow(ind1)/signalRow(ind2))...
+    r2estimate = -log(signals(:,ind1)./signals(:,ind2))...
         /(echotimes(ind1) - echotimes(ind2));
 
-    s0estimate1 = signalRow(ind1)*exp(r2estimate(k,:)*echotimes(ind1));
+    s0estimate1 = signals(:,ind1).*exp(r2estimate*echotimes(ind1));
 
     % or
 
     % (ii) taking the max of the signal vectors
 
-    s0estimate2 = max(signalRow);
+    s0estimate2 = max(signals,[],2);
 
     %Choose the higher estimate of these two options
     s0estimate3 = max(s0estimate1, s0estimate2);
 
-    s0estimates(k) = s0estimate3;
+    s0estimates = s0estimate3;
 
     %2.3 Incorporate inaccurate S0 normalisation if this has been specified
     % if isfield(settings,'normInaccuracyConstant') == 1
@@ -89,10 +128,7 @@ parfor k = 1:dim
     % else;
     % end
 
-    %% 3. Strategy 1: Normalise by different s0 estimate for each voxel
-    normSignals(k,:) = signalRow ./ s0estimate3;
-
-end
+    normSignals = signals ./ s0estimates;
 
 %% 4. Strategy 2: Normalise by mean S0 (outside loop)
 % Specify correction factor for particular protocol (for now just leave as
