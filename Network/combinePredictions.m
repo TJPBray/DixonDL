@@ -56,7 +56,7 @@ Anet2 = abs(MultiPeakFatSingleR2(echotimes,tesla,pred2(:,1),1-pred2(:,1),pred2(:
 % echoChoice = 1 - use single echotime
 % echoChoice = 2 - use earlist in phase echotimes
 
-echoChoice = 0;
+echoChoice = 1;
 
 %If the choice is to use all echo times, specify this
 if echoChoice == 0
@@ -97,9 +97,9 @@ elseif echoChoice == 2
 
 end
 
-%% Loop implementation 
+%% Loop implementation (standard loop is faster than parfor loop)
 
-parfor k = 1:size(Anet1,1)
+for k = 1:size(Anet1,1)
 
 %3. Get a for each network
 a1 = Anet1(k,ind)';
@@ -109,10 +109,17 @@ a2 = Anet2(k,ind)';
     svox = signals(k,ind)';
 
 % 5. Get s0 estimates
-    s0est1(k,1) = pinv(a1)*svox;
-    s0est2(k,1) = pinv(a2)*svox;
+
+    % '\' implementation (fastest)
+   s0est1(k,1) = a1\svox;
+   s0est2(k,1) = a2\svox;
+
+    %pinv implementation
+    % s0est1(k,1) = pinv(a1)*svox;
+    % s0est2(k,1) = pinv(a2)*svox;
 
 end
+
 
 %% Vectorised implementation (needs more thought as the matrix division is currently slow)
 
@@ -144,8 +151,6 @@ end
 % % %lsqminnorm implementation
 % %     s0est1 = lsqminnorm(a1_block,svox_long);
 % %     s0est2 = lsqminnorm(a2_block,svox_long);
-
-
 
 
 %% 5. Add S0 estimates to predictions
