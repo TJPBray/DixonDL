@@ -4,10 +4,19 @@ function [sseVec,likVec] = sseVecCalc (echotimes, tesla, predictionVec, S, sigma
 %Calculates a vector of SSE values from the predictions of neural network
 
 % Input:
-%
+% echotimes is t x 1 vector in ms
+% tesla is a scalar
+% prediction vec is an m x n matrix where m is the number of examples and n
+% is the number of parameters
+% S is an m x t matrix of signals for each example, at each echo time
+% sigma is a scalar
 
 % Output:
-% likVec is an output of likelihood values based on the above
+% likVec is an m x 1 output of likelihood values based on the above
+% sseVec is an m x 1 output of sse values
+
+% Written by Tim Bray 2024
+% t.bray@ucl.ac.uk
 
 %% 1. Get n
 n=size(predictionVec,1);
