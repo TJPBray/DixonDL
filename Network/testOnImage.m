@@ -32,8 +32,8 @@ signalsMat = reshape(image,[size(image,1)*size(image,2),size(image,3)]);
 normalisedSignalsMat = normaliseSignals(signalsMat,settings);
 
 %Get predictions
-prediction1 =nets.net1.predict(normalisedSignalsMat);
-prediction2 =nets.net2.predict(normalisedSignalsMat);
+prediction1 =nets.net1.predict(normalisedSignalsMat,'ExecutionEnvironment','parallel');
+prediction2 =nets.net2.predict(normalisedSignalsMat,'ExecutionEnvironment','parallel');
 
 %With image-based normalisation for likelihood calc
 prediction3 = combinePredictions(prediction1, prediction2, settings, signalsMat, normalisedSignalsMat);
