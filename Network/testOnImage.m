@@ -36,12 +36,35 @@ prediction1 =nets.net1.predict(normalisedSignalsMat,'ExecutionEnvironment','para
 prediction2 =nets.net2.predict(normalisedSignalsMat,'ExecutionEnvironment','parallel');
 
 %With image-based normalisation for likelihood calc
-prediction3 = combinePredictions(prediction1, prediction2, settings, signalsMat, normalisedSignalsMat);
+[prediction3,likDiff] = combinePredictions(prediction1, prediction2, settings, signalsMat, normalisedSignalsMat);
 
 %Reshape
 prediction1 = reshape(prediction1, [size(image,1) size(image,2) 2]);
 prediction2 = reshape(prediction2, [size(image,1) size(image,2) 2]);
 prediction3 = reshape(prediction3, [size(image,1) size(image,2) 3]);
+likDiffImage = reshape(likDiff, [size(image,1) size(image,2) 1]);
+
+% likDiffFilt1 = imboxfilt(likDiffImage);
+
+%% Create predictions with likelihood difference map smoothing (optional)
+
+%Median filtering within a 3x3 neighbourhood
+likDiffFilt = medfilt2(likDiffImage,[3 3]); 
+
+% %Show likelihood difference image and smoothed version (optional)
+% figure, subplot(1,3,1) 
+% imshow(likDiffImage,[-10 10])
+% title('No filter')
+% 
+% subplot(1,3,2) 
+% imshow(likDiffFilt,[-10 10])
+% title('Median filter')
+
+%Convert positive values to 1s and negative to 0 
+choiceFilt = likDiffFilt>0;
+
+%Choose fat dominant or water dominant solutions based on choiceFilt values
+prediction4 = choiceFilt.*prediction1 + (1-choiceFilt).*prediction2;
 
 % %Start loop
 % for y = indent+1:(size(image,1)-indent)
@@ -120,10 +143,14 @@ prediction3 = reshape(prediction3, [size(image,1) size(image,2) 3]);
 predictions.prediction1 = prediction1;
 predictions.prediction2 = prediction2;
 predictions.prediction3 = prediction3;
+predictions.prediction4 = prediction4; %Values produced with likelihood difference map smoothing
 
 %Unclipped
 predictions.rawPrediction1 = rawPrediction1;
 predictions.rawPrediction2 = rawPrediction2;
+
+%Likelihood difference
+predictions.likDiffImage = likDiffImage;
 
 end
 

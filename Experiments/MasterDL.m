@@ -63,6 +63,7 @@ trainingCurves(nets)
 %Train in the presence of noise
 settings.noisyTraining = 1;
 nets = trainNetworks(settings);
+nets  = trainNetworksSSL(settings);
 trainingCurves(nets)
 
 %Test on simulation data (noise-free)
@@ -236,14 +237,23 @@ toc
 ffLow = predictions.prediction1(:,:,1);
 ffHigh = predictions.prediction2(:,:,1);
 ffMap = predictions.prediction3(:,:,1);
+ffMap_likFilt = predictions.prediction4(:,:,1);
 
 r2Low = predictions.prediction1(:,:,2);
 r2High = predictions.prediction2(:,:,2);
 r2Map = predictions.prediction3(:,:,2);
+r2Map_likFilt = predictions.prediction4(:,:,2);
+
+s0Map = predictions.prediction3(:,:,3);
 
 %Remove NaNs
 ffMap(isnan(ffMap)) = 0;
 r2Map(isnan(r2Map)) = 0;
+
+%Also produce water and fat predictions for visualisation
+fatImage = s0Map.*ffMap_likFilt;
+waterImage = s0Map.*(1-ffMap_likFilt);
+
 
 %2.7 Display maps
 
@@ -320,6 +330,24 @@ try
 catch
 end
 
+
+figure
+subplot(2,2,1)
+s3=imshow(ffMap(yDisp,:).*mask(yDisp,:),[0 1])
+set(s3,'Alphadata',mask(yDisp,:))
+title('PDFF - Likelihood-chosen output')
+colormap(gca,'parula')
+colorbar
+
+subplot(2,2,2)
+s3=imshow(ffMap_likFilt(yDisp,:).*mask(yDisp,:),[0 1])
+set(s3,'Alphadata',mask(yDisp,:))
+title('PDFF - Likelihood-chosen output')
+colormap(gca,'parula')
+colorbar
+
+figure
+imshow(s0Map,[])
 
 
 % %Interrogate chosen voxel

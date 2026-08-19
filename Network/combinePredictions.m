@@ -1,4 +1,4 @@
-function combinedPredictions = combinePredictions(pred1, pred2, settings, signals, normsignals)
+function [combinedPredictions,likDiff] = combinePredictions(pred1, pred2, settings, signals, normsignals)
 % function combinedPredictions = combinePredictions(pred1, pred2)
 
 %Takes predictions from the two networks (water network and fat network)
@@ -17,6 +17,8 @@ function combinedPredictions = combinePredictions(pred1, pred2, settings, signal
 
 % Output:
 % combinedPredictions is the chosen predictions from pred1 and pred2
+% likDiff is the difference in likelihood between pred1 and pred2 
+% (likDiff = pred1likelihood - pred2likelihood)
 
 %% Get settings from settings structure
 echotimes = settings.echotimes;
@@ -166,9 +168,14 @@ pred2(:,3) = s0est2;
 %Net2
 [sse2,lik2] = sseVecCalc (echotimes, tesla, pred2, signals, sigmaEst);
 
+%Get likelihood or sse differences
+likDiff = lik1 - lik2;
+sseDiff = sse1 - sse2;
+
 %Create binary vector to choose between values
-choiceVecRic =(lik1>lik2)';
-choiceVecSSE=(sse1<sse2)';
+
+choiceVecRic = (likDiff>0)';
+choiceVecSSE = (sseDiff>0)';
 
 if sigmaEst == 0
     choiceVec = choiceVecSSE;  % Rician distribution becomes Gaussian for sigma = 0, so use Gaussian to avoid NaN
